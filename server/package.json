@@ -6,6 +6,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "lint": "eslint .",
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,6 +18,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "knex": "^3.3.0",
     "mysql2": "^3.23.3"
   },
   "devDependencies": {
