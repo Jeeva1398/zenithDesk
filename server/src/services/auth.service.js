@@ -38,7 +38,7 @@ async function register({ orgName, name, email, password }) {
     const agentId = agentResult.insertId;
     return {
       token: signToken({ agentId, orgId, email }),
-      agent: { id: agentId, orgId, name, email },
+      agent: { id: agentId, orgId, orgName, name, email },
     };
   } catch (err) {
     await connection.rollback();
@@ -49,7 +49,13 @@ async function register({ orgName, name, email, password }) {
 }
 
 async function login({ email, password }) {
-  const [rows] = await pool.query('SELECT * FROM agents WHERE email = ?', [email]);
+  const [rows] = await pool.query(
+    `SELECT agents.*, organizations.name AS org_name
+     FROM agents
+     JOIN organizations ON organizations.id = agents.org_id
+     WHERE agents.email = ?`,
+    [email],
+  );
   const agent = rows[0];
   if (!agent) {
     throw new ApiError(401, 'Invalid email or password');
@@ -62,7 +68,13 @@ async function login({ email, password }) {
 
   return {
     token: signToken({ agentId: agent.id, orgId: agent.org_id, email: agent.email }),
-    agent: { id: agent.id, orgId: agent.org_id, name: agent.name, email: agent.email },
+    agent: {
+      id: agent.id,
+      orgId: agent.org_id,
+      orgName: agent.org_name,
+      name: agent.name,
+      email: agent.email,
+    },
   };
 }
 

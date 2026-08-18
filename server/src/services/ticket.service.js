@@ -78,10 +78,13 @@ async function listTickets(orgId, filters) {
 }
 
 async function getTicketById(orgId, ticketId) {
-  const [rows] = await pool.query('SELECT * FROM tickets WHERE id = ? AND org_id = ?', [
-    ticketId,
-    orgId,
-  ]);
+  const [rows] = await pool.query(
+    `SELECT t.*, u.name AS customer_name, u.email AS customer_email
+     FROM tickets t
+     LEFT JOIN users u ON u.id = t.customer_id
+     WHERE t.id = ? AND t.org_id = ?`,
+    [ticketId, orgId],
+  );
   const ticket = rows[0];
   if (!ticket) {
     throw new ApiError(404, 'Ticket not found');
