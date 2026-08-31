@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 
-const authenticate = catchAsync(async (req, res, next) => {
+const authenticateSuperAdmin = catchAsync(async (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     throw new ApiError(401, 'Missing or invalid Authorization header');
@@ -17,13 +17,12 @@ const authenticate = catchAsync(async (req, res, next) => {
     throw new ApiError(401, 'Invalid or expired token');
   }
 
-  req.agent = {
-    id: payload.agentId,
-    orgId: payload.orgId,
-    role: payload.role,
-    email: payload.email,
-  };
+  if (payload.role !== 'super_admin') {
+    throw new ApiError(403, 'Super admin role required');
+  }
+
+  req.superAdmin = { id: payload.superAdminId };
   next();
 });
 
-module.exports = authenticate;
+module.exports = authenticateSuperAdmin;

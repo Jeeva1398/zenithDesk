@@ -1,9 +1,9 @@
 import request from './client';
 
-export function register({ orgName, name, email, password }) {
-  return request('/auth/register', {
+export function signup({ orgName, adminName, adminEmail, adminPassword }) {
+  return request('/organizations/signup', {
     method: 'POST',
-    body: { orgName, name, email, password },
+    body: { orgName, adminName, adminEmail, adminPassword },
   });
 }
 

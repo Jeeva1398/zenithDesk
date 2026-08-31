@@ -20,6 +20,44 @@ async function findOrCreateCustomer(orgId, { customerName, customerEmail }) {
   return result.insertId;
 }
 
+async function findOrCreateTag(orgId, name) {
+  const [rows] = await pool.query('SELECT id FROM tags WHERE org_id = ? AND name = ?', [
+    orgId,
+    name,
+  ]);
+  if (rows.length > 0) {
+    return rows[0].id;
+  }
+
+  const [result] = await pool.query(
+    'INSERT INTO tags (org_id, name, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+    [orgId, name],
+  );
+  return result.insertId;
+}
+
+async function syncTicketTags(orgId, ticketId, tagNames) {
+  const names = [...new Set(tagNames.map((name) => name.trim()).filter(Boolean))];
+  const tagIds = await Promise.all(names.map((name) => findOrCreateTag(orgId, name)));
+
+  await pool.query('DELETE FROM ticket_tags WHERE ticket_id = ?', [ticketId]);
+  if (tagIds.length > 0) {
+    const values = tagIds.map((tagId) => [ticketId, tagId]);
+    await pool.query('INSERT INTO ticket_tags (ticket_id, tag_id) VALUES ?', [values]);
+  }
+}
+
+async function getTicketTags(ticketId) {
+  const [rows] = await pool.query(
+    `SELECT tags.name FROM ticket_tags
+     JOIN tags ON tags.id = ticket_tags.tag_id
+     WHERE ticket_tags.ticket_id = ?
+     ORDER BY tags.name ASC`,
+    [ticketId],
+  );
+  return rows.map((row) => row.name);
+}
+
 async function createTicket(orgId, data) {
   const { customerName, customerEmail, subject, description, category, priority } = data;
 
@@ -44,6 +82,7 @@ async function createTicket(orgId, data) {
 async function listTickets(orgId, filters) {
   const conditions = ['t.org_id = ?'];
   const params = [orgId];
+  const joins = [];
 
   if (filters.status) {
     conditions.push('t.status = ?');
@@ -57,9 +96,16 @@ async function listTickets(orgId, filters) {
     conditions.push('t.category = ?');
     params.push(filters.category);
   }
-  if (filters.assignedAgentId) {
+  if (filters.assignedAgentId === 'unassigned') {
+    conditions.push('t.assigned_agent_id IS NULL');
+  } else if (filters.assignedAgentId) {
     conditions.push('t.assigned_agent_id = ?');
     params.push(filters.assignedAgentId);
+  }
+  if (filters.tag) {
+    joins.push('JOIN ticket_tags tt ON tt.ticket_id = t.id JOIN tags ON tags.id = tt.tag_id');
+    conditions.push('tags.name = ?');
+    params.push(filters.tag);
   }
 
   const page = Math.max(parseInt(filters.page, 10) || 1, 1);
@@ -67,14 +113,40 @@ async function listTickets(orgId, filters) {
   const offset = (page - 1) * limit;
 
   const [rows] = await pool.query(
-    `SELECT t.* FROM tickets t
+    `SELECT DISTINCT t.* FROM tickets t
+     ${joins.join(' ')}
      WHERE ${conditions.join(' AND ')}
      ORDER BY t.created_at DESC
      LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
 
-  return { tickets: rows, page, limit };
+  const tagsByTicketId = await attachTagsToTickets(rows);
+  return {
+    tickets: rows.map((row) => ({ ...row, tags: tagsByTicketId[row.id] || [] })),
+    page,
+    limit,
+  };
+}
+
+async function attachTagsToTickets(tickets) {
+  if (tickets.length === 0) {
+    return {};
+  }
+
+  const ticketIds = tickets.map((t) => t.id);
+  const [rows] = await pool.query(
+    `SELECT ticket_tags.ticket_id, tags.name FROM ticket_tags
+     JOIN tags ON tags.id = ticket_tags.tag_id
+     WHERE ticket_tags.ticket_id IN (?)`,
+    [ticketIds],
+  );
+
+  return rows.reduce((acc, row) => {
+    acc[row.ticket_id] = acc[row.ticket_id] || [];
+    acc[row.ticket_id].push(row.name);
+    return acc;
+  }, {});
 }
 
 async function getTicketById(orgId, ticketId) {
@@ -94,8 +166,9 @@ async function getTicketById(orgId, ticketId) {
     'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC',
     [ticketId],
   );
+  const tags = await getTicketTags(ticketId);
 
-  return { ...ticket, comments };
+  return { ...ticket, comments, tags };
 }
 
 async function updateTicket(orgId, ticketId, updates) {
@@ -126,19 +199,26 @@ async function updateTicket(orgId, ticketId, updates) {
     params.push(updates.assignedAgentId);
   }
 
-  if (setClauses.length === 0) {
+  if (setClauses.length === 0 && updates.tagNames === undefined) {
     throw new ApiError(400, 'No valid fields to update');
   }
 
-  setClauses.push('updated_at = NOW()');
+  if (setClauses.length > 0) {
+    setClauses.push('updated_at = NOW()');
+    const [result] = await pool.query(
+      `UPDATE tickets SET ${setClauses.join(', ')} WHERE id = ? AND org_id = ?`,
+      [...params, ticketId, orgId],
+    );
 
-  const [result] = await pool.query(
-    `UPDATE tickets SET ${setClauses.join(', ')} WHERE id = ? AND org_id = ?`,
-    [...params, ticketId, orgId],
-  );
+    if (result.affectedRows === 0) {
+      throw new ApiError(404, 'Ticket not found');
+    }
+  } else {
+    await getTicketById(orgId, ticketId);
+  }
 
-  if (result.affectedRows === 0) {
-    throw new ApiError(404, 'Ticket not found');
+  if (Array.isArray(updates.tagNames)) {
+    await syncTicketTags(orgId, ticketId, updates.tagNames);
   }
 
   return getTicketById(orgId, ticketId);

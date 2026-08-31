@@ -1,6 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
-const authService = require('../services/auth.service');
+const superAdminService = require('../services/superAdmin.service');
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
@@ -8,7 +8,7 @@ const login = catchAsync(async (req, res) => {
     throw new ApiError(400, 'email and password are required');
   }
 
-  const result = await authService.login({ email, password });
+  const result = await superAdminService.login({ email, password });
   res.status(200).json(result);
 });
 

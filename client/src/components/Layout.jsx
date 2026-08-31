@@ -1,16 +1,24 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import ViewsPanel from './ViewsPanel';
 
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const onTickets = Boolean(useMatch('/tickets/*'));
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm lg:hidden">
+      {onTickets && (
+        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-16 lg:z-20 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-gray-200">
+          <ViewsPanel />
+        </aside>
+      )}
+
+      <div className={`flex min-h-screen flex-col ${onTickets ? 'lg:pl-72' : 'lg:pl-16'}`}>
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm lg:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}

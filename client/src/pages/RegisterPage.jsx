@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register as registerRequest } from '../api/auth';
+import { signup as signupRequest } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { inputClass, labelClass, primaryButtonClass } from '../lib/ui';
 
@@ -19,7 +19,12 @@ function RegisterPage() {
     setError('');
     setSubmitting(true);
     try {
-      const data = await registerRequest({ orgName, name, email, password });
+      const data = await signupRequest({
+        orgName,
+        adminName: name,
+        adminEmail: email,
+        adminPassword: password,
+      });
       login(data);
       navigate('/tickets');
     } catch (err) {

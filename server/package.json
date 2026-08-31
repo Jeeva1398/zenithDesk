@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
+    "seed": "node src/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -23,10 +24,12 @@
     "knex": "^3.3.0",
     "morgan": "^1.11.0",
     "mysql2": "^3.23.3",
+    "resend": "^6.25.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@faker-js/faker": "^10.6.0",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
     "nodemon": "^3.1.14",

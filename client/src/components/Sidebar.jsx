@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ViewsPanel from './ViewsPanel';
 import { navItemActiveClass, navItemClass, navItemDisabledClass } from '../lib/ui';
 
 const ICONS = {
@@ -46,42 +47,81 @@ const NAV_ITEMS = [
   { label: 'Settings', to: null, icon: 'settings' },
 ];
 
-function NavLinks() {
-  const ticketsMatch = useMatch('/tickets/*');
+function useTicketsActive() {
+  return Boolean(useMatch('/tickets/*'));
+}
+
+// Icon-only rail — desktop.
+function IconRail() {
+  const ticketsActive = useTicketsActive();
+  const { agent, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const initial = agent?.name?.charAt(0).toUpperCase() || '?';
 
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
-        if (!item.to) {
+    <div className="flex h-full w-16 flex-col items-center border-r border-gray-200 bg-white py-4">
+      <Link
+        to="/tickets"
+        className="mb-6 flex size-9 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
+      >
+        Z
+      </Link>
+
+      <nav className="flex flex-1 flex-col items-center gap-1">
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.to === '/tickets' && ticketsActive;
+          if (!item.to) {
+            return (
+              <div
+                key={item.label}
+                title={`${item.label} (coming soon)`}
+                aria-disabled="true"
+                className="flex size-10 cursor-not-allowed items-center justify-center rounded-lg text-gray-300"
+              >
+                {ICONS[item.icon]}
+              </div>
+            );
+          }
           return (
-            <div key={item.label} className={navItemDisabledClass} aria-disabled="true">
+            <Link
+              key={item.label}
+              to={item.to}
+              title={item.label}
+              className={`flex size-10 items-center justify-center rounded-lg transition ${
+                isActive
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
               {ICONS[item.icon]}
-              {item.label}
-              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                Soon
-              </span>
-            </div>
+            </Link>
           );
-        }
+        })}
+      </nav>
 
-        const isActive = item.to === '/tickets' && Boolean(ticketsMatch);
-
-        return (
-          <Link
-            key={item.label}
-            to={item.to}
-            className={isActive ? navItemActiveClass : navItemClass}
-          >
-            {ICONS[item.icon]}
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
+      {agent && (
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={`Log out (${agent.name})`}
+          className="flex size-9 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 hover:ring-2 hover:ring-indigo-200"
+        >
+          {initial}
+        </button>
+      )}
+    </div>
   );
 }
 
-function SidebarContent() {
+// Full labeled nav + views — mobile drawer.
+function MobileSidebarContent() {
+  const ticketsActive = useTicketsActive();
   const { agent, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -101,8 +141,37 @@ function SidebarContent() {
         <span className="text-base font-semibold text-gray-900">ZenithDesk</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3">
-        <NavLinks />
+      <div className="px-3">
+        <nav className="mb-4 flex flex-col gap-1">
+          {NAV_ITEMS.map((item) => {
+            if (!item.to) {
+              return (
+                <div key={item.label} className={navItemDisabledClass} aria-disabled="true">
+                  {ICONS[item.icon]}
+                  {item.label}
+                  <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    Soon
+                  </span>
+                </div>
+              );
+            }
+            const isActive = item.to === '/tickets' && ticketsActive;
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={isActive ? navItemActiveClass : navItemClass}
+              >
+                {ICONS[item.icon]}
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="flex-1 overflow-y-auto border-t border-gray-100">
+        <ViewsPanel />
       </div>
 
       {agent && (
@@ -158,15 +227,15 @@ function Sidebar({ mobileOpen, onClose }) {
 
   return (
     <>
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-gray-200">
-        <SidebarContent />
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
+        <IconRail />
       </aside>
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-          <div className="relative flex w-64 max-w-[80%] flex-col border-r border-gray-200 shadow-xl">
-            <SidebarContent />
+          <div className="relative flex w-72 max-w-[85%] flex-col border-r border-gray-200 shadow-xl">
+            <MobileSidebarContent />
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { addComment, getTicket, updateTicket } from '../api/tickets';
+import { listAgents } from '../api/agents';
 import { useAuth } from '../context/AuthContext';
 import StyledSelect from '../components/StyledSelect';
 import { cardClass, inputClass, primaryButtonClass } from '../lib/ui';
@@ -21,9 +22,11 @@ function TicketDetailPage() {
   const { id } = useParams();
   const { token } = useAuth();
   const [ticket, setTicket] = useState(null);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [tagInput, setTagInput] = useState('');
   const [commentBody, setCommentBody] = useState('');
   const [commentError, setCommentError] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -46,6 +49,13 @@ function TicketDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    listAgents(token)
+      .then((result) => setAgents(result.agents))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleFieldUpdate = async (field, value) => {
     setUpdating(true);
     setError('');
@@ -57,6 +67,24 @@ function TicketDetailPage() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleAddTag = async (event) => {
+    event.preventDefault();
+    const name = tagInput.trim();
+    if (!name || ticket.tags.includes(name)) {
+      setTagInput('');
+      return;
+    }
+    setTagInput('');
+    await handleFieldUpdate('tagNames', [...ticket.tags, name]);
+  };
+
+  const handleRemoveTag = async (name) => {
+    await handleFieldUpdate(
+      'tagNames',
+      ticket.tags.filter((t) => t !== name),
+    );
   };
 
   const handleCommentSubmit = async (event) => {
@@ -190,6 +218,59 @@ function TicketDetailPage() {
                 disabled={updating}
                 onChange={(value) => handleFieldUpdate('priority', value)}
               />
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Assignee
+              </p>
+              <select
+                value={ticket.assigned_agent_id || ''}
+                disabled={updating}
+                onChange={(e) => handleFieldUpdate('assignedAgentId', e.target.value || null)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              >
+                <option value="">Unassigned</option>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Tags
+              </p>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {ticket.tags.length === 0 && <span className="text-sm text-gray-400">No tags</span>}
+                {ticket.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      aria-label={`Remove tag ${tag}`}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <form onSubmit={handleAddTag}>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  placeholder="Add a tag…"
+                  className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </form>
             </div>
 
             <div className="border-t border-gray-100 pt-4">

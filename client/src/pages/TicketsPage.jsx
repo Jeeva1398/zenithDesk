@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { createTicket, listTickets } from '../api/tickets';
+import { Link, useSearchParams } from 'react-router-dom';
+import { createTicket, listTickets, updateTicket } from '../api/tickets';
+import { listAgents } from '../api/agents';
 import { useAuth } from '../context/AuthContext';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
@@ -21,20 +22,28 @@ const emptyForm = {
 
 function TicketsPage() {
   const { token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ status: '', priority: '', category: '' });
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const loadTickets = async (activeFilters) => {
+  const filters = {
+    status: searchParams.get('status') || '',
+    priority: searchParams.get('priority') || '',
+    category: searchParams.get('category') || '',
+    assignedAgentId: searchParams.get('assignedAgentId') || '',
+  };
+
+  const loadTickets = async () => {
     setLoading(true);
     setError('');
     try {
-      const result = await listTickets(token, activeFilters);
+      const result = await listTickets(token, filters);
       setTickets(result.tickets);
     } catch (err) {
       setError(err.message);
@@ -44,21 +53,25 @@ function TicketsPage() {
   };
 
   useEffect(() => {
-    loadTickets(filters);
+    loadTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
+
+  useEffect(() => {
+    listAgents(token)
+      .then((result) => setAgents(result.agents))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFilterSubmit = (event) => {
-    event.preventDefault();
-    loadTickets(filters);
-  };
+  const [pendingFilters, setPendingFilters] = useState(filters);
+  useEffect(() => {
+    setPendingFilters(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
-  const hasActiveFilters = filters.status || filters.priority || filters.category;
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
-  // Counts reflect only the currently loaded page of tickets (listTickets
-  // defaults to 20/page) — a true org-wide total would need a backend
-  // aggregate endpoint, which doesn't exist yet. Hidden entirely once a
-  // filter is active so the numbers never look like a misleading total.
   const stats = useMemo(
     () => ({
       total: tickets.length,
@@ -69,10 +82,23 @@ function TicketsPage() {
     [tickets],
   );
 
+  const handleFilterSubmit = (event) => {
+    event.preventDefault();
+    const next = Object.fromEntries(Object.entries(pendingFilters).filter(([, v]) => v));
+    setSearchParams(next);
+  };
+
   const handleClearFilters = () => {
-    const cleared = { status: '', priority: '', category: '' };
-    setFilters(cleared);
-    loadTickets(cleared);
+    setSearchParams({});
+  };
+
+  const handleAssign = async (ticketId, agentId) => {
+    try {
+      await updateTicket(token, ticketId, { assignedAgentId: agentId || null });
+      loadTickets();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const closeForm = () => {
@@ -88,7 +114,7 @@ function TicketsPage() {
     try {
       await createTicket(token, form);
       closeForm();
-      loadTickets(filters);
+      loadTickets();
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -127,8 +153,8 @@ function TicketsPage() {
         className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
       >
         <select
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          value={pendingFilters.status}
+          onChange={(e) => setPendingFilters({ ...pendingFilters, status: e.target.value })}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         >
           <option value="">All statuses</option>
@@ -139,8 +165,8 @@ function TicketsPage() {
           ))}
         </select>
         <select
-          value={filters.priority}
-          onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+          value={pendingFilters.priority}
+          onChange={(e) => setPendingFilters({ ...pendingFilters, priority: e.target.value })}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         >
           <option value="">All priorities</option>
@@ -153,8 +179,8 @@ function TicketsPage() {
         <input
           type="text"
           placeholder="Category"
-          value={filters.category}
-          onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+          value={pendingFilters.category}
+          onChange={(e) => setPendingFilters({ ...pendingFilters, category: e.target.value })}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         />
         <button type="submit" className={secondaryButtonClass}>
@@ -211,14 +237,15 @@ function TicketsPage() {
       )}
 
       {!loading && tickets.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
                 <th className="px-5 py-3">Subject</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Priority</th>
-                <th className="px-5 py-3">Category</th>
+                <th className="px-5 py-3">Tags</th>
+                <th className="px-5 py-3">Assignee</th>
                 <th className="px-5 py-3">Created</th>
               </tr>
             </thead>
@@ -239,7 +266,34 @@ function TicketsPage() {
                   <td className="px-5 py-3.5">
                     <Badge type="priority" value={ticket.priority} />
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600">{ticket.category || '—'}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex flex-wrap gap-1">
+                      {ticket.tags?.length > 0
+                        ? ticket.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+                            >
+                              {tag}
+                            </span>
+                          ))
+                        : '—'}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <select
+                      value={ticket.assigned_agent_id || ''}
+                      onChange={(e) => handleAssign(ticket.id, e.target.value || null)}
+                      className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    >
+                      <option value="">Unassigned</option>
+                      {agents.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-5 py-3.5 text-gray-500">
                     {new Date(ticket.created_at).toLocaleString()}
                   </td>
