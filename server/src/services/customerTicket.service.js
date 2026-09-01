@@ -23,7 +23,13 @@ async function getTicketById(orgId, email, ticketId) {
   if (!ticket) {
     throw new ApiError(404, 'Ticket not found');
   }
-  return ticket;
+
+  const [comments] = await pool.query(
+    'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC',
+    [ticket.id],
+  );
+
+  return { ...ticket, comments };
 }
 
 module.exports = { listTickets, getTicketById };

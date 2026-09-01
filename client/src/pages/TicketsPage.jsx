@@ -155,11 +155,11 @@ function TicketsPage() {
         <select
           value={pendingFilters.status}
           onChange={(e) => setPendingFilters({ ...pendingFilters, status: e.target.value })}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm capitalize text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         >
           <option value="">All statuses</option>
           {STATUSES.map((s) => (
-            <option key={s} value={s}>
+            <option key={s} value={s} className="capitalize">
               {s}
             </option>
           ))}
@@ -167,11 +167,11 @@ function TicketsPage() {
         <select
           value={pendingFilters.priority}
           onChange={(e) => setPendingFilters({ ...pendingFilters, priority: e.target.value })}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm capitalize text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         >
           <option value="">All priorities</option>
           {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
+            <option key={p} value={p} className="capitalize">
               {p}
             </option>
           ))}
@@ -364,10 +364,10 @@ function TicketsPage() {
                 <select
                   value={form.priority}
                   onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                  className={inputClass}
+                  className={`${inputClass} capitalize`}
                 >
                   {PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
+                    <option key={p} value={p} className="capitalize">
                       {p}
                     </option>
                   ))}

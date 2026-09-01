@@ -2,6 +2,16 @@ const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 const customerAuthService = require('../services/customerAuth.service');
 
+const resolveOrg = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, 'email is required');
+  }
+
+  const org = await customerAuthService.resolveOrgForEmail(email);
+  res.status(200).json(org);
+});
+
 const requestOtp = catchAsync(async (req, res) => {
   const { orgId, email } = req.body;
   if (!orgId || !email) {
@@ -22,4 +32,4 @@ const verifyOtp = catchAsync(async (req, res) => {
   res.status(200).json({ token });
 });
 
-module.exports = { requestOtp, verifyOtp };
+module.exports = { resolveOrg, requestOtp, verifyOtp };
