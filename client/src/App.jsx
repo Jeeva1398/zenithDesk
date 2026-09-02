@@ -5,6 +5,7 @@ import CustomerLayout from './components/CustomerLayout';
 import CustomerProtectedRoute from './components/CustomerProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
@@ -19,6 +20,7 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/tickets/:id" element={<TicketDetailPage />} />
         </Route>

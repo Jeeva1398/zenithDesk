@@ -41,7 +41,7 @@ const ICONS = {
 };
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', to: null, icon: 'dashboard' },
+  { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
   { label: 'Tickets', to: '/tickets', icon: 'tickets' },
   { label: 'Customers', to: null, icon: 'customers' },
   { label: 'Settings', to: null, icon: 'settings' },
@@ -51,9 +51,15 @@ function useTicketsActive() {
   return Boolean(useMatch('/tickets/*'));
 }
 
+function isItemActive(item, pathname, ticketsActive) {
+  if (item.to === '/tickets') return ticketsActive;
+  return item.to !== null && pathname === item.to;
+}
+
 // Icon-only rail — desktop.
 function IconRail() {
   const ticketsActive = useTicketsActive();
+  const { pathname } = useLocation();
   const { agent, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -75,7 +81,7 @@ function IconRail() {
 
       <nav className="flex flex-1 flex-col items-center gap-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.to === '/tickets' && ticketsActive;
+          const isActive = isItemActive(item, pathname, ticketsActive);
           if (!item.to) {
             return (
               <div
@@ -122,6 +128,7 @@ function IconRail() {
 // Full labeled nav + views — mobile drawer.
 function MobileSidebarContent() {
   const ticketsActive = useTicketsActive();
+  const { pathname } = useLocation();
   const { agent, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -155,7 +162,7 @@ function MobileSidebarContent() {
                 </div>
               );
             }
-            const isActive = item.to === '/tickets' && ticketsActive;
+            const isActive = isItemActive(item, pathname, ticketsActive);
             return (
               <Link
                 key={item.label}
