@@ -11,4 +11,24 @@ const listAgents = catchAsync(async (req, res) => {
   res.status(200).json(result);
 });
 
-module.exports = { createAgent, listAgents };
+const updateAgent = catchAsync(async (req, res) => {
+  const agent = await agentService.updateAgent(req.agent.orgId, req.params.id, req.body);
+  res.status(200).json(agent);
+});
+
+const deleteAgent = catchAsync(async (req, res) => {
+  await agentService.deleteAgent(req.agent.orgId, req.params.id, req.agent.id);
+  res.status(204).send();
+});
+
+const updateMe = catchAsync(async (req, res) => {
+  const agent = await agentService.updateProfile(req.agent.orgId, req.agent.id, req.body);
+  res.status(200).json(agent);
+});
+
+const changeMyPassword = catchAsync(async (req, res) => {
+  await agentService.changePassword(req.agent.id, req.body.currentPassword, req.body.newPassword);
+  res.status(204).send();
+});
+
+module.exports = { createAgent, listAgents, updateAgent, deleteAgent, updateMe, changeMyPassword };

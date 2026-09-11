@@ -26,6 +26,15 @@ export function AuthProvider({ children }) {
     setAuth(null);
   };
 
+  const updateAgent = (updates) => {
+    setAuth((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, agent: { ...prev.agent, ...updates } };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const value = useMemo(
     () => ({
       token: auth?.token ?? null,
@@ -33,6 +42,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(auth?.token),
       login,
       logout,
+      updateAgent,
     }),
     [auth],
   );

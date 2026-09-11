@@ -163,7 +163,14 @@ async function getTicketById(orgId, ticketId) {
   }
 
   const [comments] = await pool.query(
-    'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC',
+    `SELECT tc.*,
+       CASE WHEN tc.author_agent_id IS NOT NULL THEN 'agent' ELSE 'customer' END AS author_type,
+       COALESCE(a.name, cu.name) AS author_name
+     FROM ticket_comments tc
+     LEFT JOIN agents a ON a.id = tc.author_agent_id
+     LEFT JOIN users cu ON cu.id = tc.author_customer_id
+     WHERE tc.ticket_id = ?
+     ORDER BY tc.created_at ASC`,
     [ticketId],
   );
   const tags = await getTicketTags(ticketId);

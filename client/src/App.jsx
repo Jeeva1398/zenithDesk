@@ -8,6 +8,9 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
+import CustomersPage from './pages/CustomersPage';
+import CustomerDetailPage from './pages/CustomerDetailPage';
+import SettingsPage from './pages/SettingsPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerTicketsPage from './pages/customer/CustomerTicketsPage';
 import CustomerTicketDetailPage from './pages/customer/CustomerTicketDetailPage';
@@ -23,6 +26,9 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/customers/:id" element={<CustomerDetailPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

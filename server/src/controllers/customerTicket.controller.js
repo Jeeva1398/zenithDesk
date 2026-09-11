@@ -11,4 +11,19 @@ const getMyTicket = catchAsync(async (req, res) => {
   res.status(200).json(ticket);
 });
 
-module.exports = { listMyTickets, getMyTicket };
+const createMyTicket = catchAsync(async (req, res) => {
+  const ticket = await customerTicketService.createTicket(req.customer.orgId, req.customer.email, req.body);
+  res.status(201).json(ticket);
+});
+
+const addMyComment = catchAsync(async (req, res) => {
+  const comment = await customerTicketService.addComment(
+    req.customer.orgId,
+    req.customer.email,
+    req.params.id,
+    req.body.body,
+  );
+  res.status(201).json(comment);
+});
+
+module.exports = { listMyTickets, getMyTicket, createMyTicket, addMyComment };

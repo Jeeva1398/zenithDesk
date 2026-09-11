@@ -43,22 +43,28 @@ const ICONS = {
 const NAV_ITEMS = [
   { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
   { label: 'Tickets', to: '/tickets', icon: 'tickets' },
-  { label: 'Customers', to: null, icon: 'customers' },
-  { label: 'Settings', to: null, icon: 'settings' },
+  { label: 'Customers', to: '/customers', icon: 'customers' },
+  { label: 'Settings', to: '/settings', icon: 'settings' },
 ];
 
 function useTicketsActive() {
   return Boolean(useMatch('/tickets/*'));
 }
 
-function isItemActive(item, pathname, ticketsActive) {
+function useCustomersActive() {
+  return Boolean(useMatch('/customers/*'));
+}
+
+function isItemActive(item, pathname, ticketsActive, customersActive) {
   if (item.to === '/tickets') return ticketsActive;
+  if (item.to === '/customers') return customersActive;
   return item.to !== null && pathname === item.to;
 }
 
 // Icon-only rail — desktop.
 function IconRail() {
   const ticketsActive = useTicketsActive();
+  const customersActive = useCustomersActive();
   const { pathname } = useLocation();
   const { agent, logout } = useAuth();
   const navigate = useNavigate();
@@ -81,7 +87,7 @@ function IconRail() {
 
       <nav className="flex flex-1 flex-col items-center gap-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = isItemActive(item, pathname, ticketsActive);
+          const isActive = isItemActive(item, pathname, ticketsActive, customersActive);
           if (!item.to) {
             return (
               <div
@@ -128,6 +134,7 @@ function IconRail() {
 // Full labeled nav + views — mobile drawer.
 function MobileSidebarContent() {
   const ticketsActive = useTicketsActive();
+  const customersActive = useCustomersActive();
   const { pathname } = useLocation();
   const { agent, logout } = useAuth();
   const navigate = useNavigate();
@@ -162,7 +169,7 @@ function MobileSidebarContent() {
                 </div>
               );
             }
-            const isActive = isItemActive(item, pathname, ticketsActive);
+            const isActive = isItemActive(item, pathname, ticketsActive, customersActive);
             return (
               <Link
                 key={item.label}

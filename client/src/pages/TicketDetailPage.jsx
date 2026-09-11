@@ -161,6 +161,11 @@ function TicketDetailPage() {
               <div className="flex flex-col gap-3">
                 {ticket.comments.map((comment) => (
                   <div key={comment.id} className={`${cardClass} p-4 text-sm`}>
+                    <p className="mb-1.5 text-xs font-medium text-gray-500">
+                      {comment.author_type === 'customer'
+                        ? `${comment.author_name || 'Customer'} (customer)`
+                        : comment.author_name || 'Agent'}
+                    </p>
                     <p className="whitespace-pre-wrap text-gray-800">{comment.body}</p>
                     <p className="mt-2 text-xs text-gray-400">
                       {new Date(comment.created_at).toLocaleString()}
