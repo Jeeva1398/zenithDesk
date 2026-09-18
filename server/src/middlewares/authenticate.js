@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
+const { verifyToken, TOKEN_TYPES } = require('../utils/token');
 
 const authenticate = catchAsync(async (req, res, next) => {
   const header = req.headers.authorization;
@@ -12,7 +12,7 @@ const authenticate = catchAsync(async (req, res, next) => {
 
   let payload;
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = verifyToken(token, TOKEN_TYPES.AGENT);
   } catch {
     throw new ApiError(401, 'Invalid or expired token');
   }

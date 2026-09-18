@@ -1,7 +1,7 @@
 const pool = require('../db/connection');
 const ApiError = require('../utils/ApiError');
 const { hashPassword } = require('../utils/password');
-const { signToken } = require('../utils/token');
+const { signToken, TOKEN_TYPES } = require('../utils/token');
 
 async function signup({ orgName, adminName, adminEmail, adminPassword }) {
   const [existing] = await pool.query('SELECT id FROM agents WHERE email = ?', [adminEmail]);
@@ -30,7 +30,7 @@ async function signup({ orgName, adminName, adminEmail, adminPassword }) {
 
     const agentId = agentResult.insertId;
     return {
-      token: signToken({ agentId, orgId, role: 'admin', email: adminEmail }),
+      token: signToken({ typ: TOKEN_TYPES.AGENT, agentId, orgId, role: 'admin', email: adminEmail }),
       agent: { id: agentId, orgId, orgName, name: adminName, email: adminEmail, role: 'admin' },
     };
   } catch (err) {

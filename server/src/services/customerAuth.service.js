@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const pool = require('../db/connection');
 const ApiError = require('../utils/ApiError');
-const { signToken } = require('../utils/token');
+const { signToken, TOKEN_TYPES } = require('../utils/token');
 const { sendOtpEmail } = require('./email.service');
 
 const OTP_TTL_MINUTES = 10;
@@ -80,7 +80,7 @@ async function verifyOtp(orgId, email, code) {
   await pool.query('DELETE FROM customer_otps WHERE org_id = ? AND email = ?', [orgId, email]);
 
   return signToken(
-    { email, orgId, role: 'customer' },
+    { typ: TOKEN_TYPES.CUSTOMER, email, orgId, role: 'customer' },
     { expiresIn: process.env.CUSTOMER_JWT_EXPIRES_IN || '20m' },
   );
 }

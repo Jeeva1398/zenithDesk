@@ -1,7 +1,7 @@
 const pool = require('../db/connection');
 const ApiError = require('../utils/ApiError');
 const { comparePassword } = require('../utils/password');
-const { signToken } = require('../utils/token');
+const { signToken, TOKEN_TYPES } = require('../utils/token');
 
 async function login({ email, password }) {
   const [rows] = await pool.query(
@@ -22,7 +22,13 @@ async function login({ email, password }) {
   }
 
   return {
-    token: signToken({ agentId: agent.id, orgId: agent.org_id, role: agent.role, email: agent.email }),
+    token: signToken({
+      typ: TOKEN_TYPES.AGENT,
+      agentId: agent.id,
+      orgId: agent.org_id,
+      role: agent.role,
+      email: agent.email,
+    }),
     agent: {
       id: agent.id,
       orgId: agent.org_id,

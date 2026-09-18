@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
+const { verifyToken, TOKEN_TYPES } = require('../utils/token');
 
 const authenticateSuperAdmin = catchAsync(async (req, res, next) => {
   const header = req.headers.authorization;
@@ -12,13 +12,9 @@ const authenticateSuperAdmin = catchAsync(async (req, res, next) => {
 
   let payload;
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = verifyToken(token, TOKEN_TYPES.SUPER_ADMIN);
   } catch {
     throw new ApiError(401, 'Invalid or expired token');
-  }
-
-  if (payload.role !== 'super_admin') {
-    throw new ApiError(403, 'Super admin role required');
   }
 
   req.superAdmin = { id: payload.superAdminId };

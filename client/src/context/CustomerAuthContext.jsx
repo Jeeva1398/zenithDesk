@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { onUnauthorized } from '../api/client';
 
 const CustomerAuthContext = createContext(null);
 
@@ -25,6 +26,19 @@ export function CustomerAuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY);
     setAuth(null);
   };
+
+  const tokenRef = useRef(auth?.token ?? null);
+  tokenRef.current = auth?.token ?? null;
+
+  useEffect(
+    () =>
+      onUnauthorized((failedToken) => {
+        if (failedToken === tokenRef.current) {
+          logout();
+        }
+      }),
+    [],
+  );
 
   const value = useMemo(
     () => ({

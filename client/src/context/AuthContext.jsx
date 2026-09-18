@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { onUnauthorized } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -25,6 +26,21 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY);
     setAuth(null);
   };
+
+  // Read through a ref so the subscription can be registered once rather than
+  // re-registered on every token change.
+  const tokenRef = useRef(auth?.token ?? null);
+  tokenRef.current = auth?.token ?? null;
+
+  useEffect(
+    () =>
+      onUnauthorized((failedToken) => {
+        if (failedToken === tokenRef.current) {
+          logout();
+        }
+      }),
+    [],
+  );
 
   const updateAgent = (updates) => {
     setAuth((prev) => {

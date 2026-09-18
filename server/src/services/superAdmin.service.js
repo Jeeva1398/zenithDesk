@@ -1,7 +1,7 @@
 const pool = require('../db/connection');
 const ApiError = require('../utils/ApiError');
 const { comparePassword } = require('../utils/password');
-const { signToken } = require('../utils/token');
+const { signToken, TOKEN_TYPES } = require('../utils/token');
 
 async function login({ email, password }) {
   const [rows] = await pool.query('SELECT * FROM super_admins WHERE email = ?', [email]);
@@ -16,7 +16,7 @@ async function login({ email, password }) {
   }
 
   return {
-    token: signToken({ superAdminId: superAdmin.id, role: 'super_admin' }),
+    token: signToken({ typ: TOKEN_TYPES.SUPER_ADMIN, superAdminId: superAdmin.id, role: 'super_admin' }),
     superAdmin: { id: superAdmin.id, name: superAdmin.name, email: superAdmin.email },
   };
 }
