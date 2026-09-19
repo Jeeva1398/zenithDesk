@@ -1,5 +1,6 @@
 const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
+const slaService = require('./sla.service');
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 const STATUSES = ['open', 'pending', 'resolved', 'closed'];
@@ -63,6 +64,27 @@ async function attachTagsToTickets(db, tickets) {
     acc[row.ticket_id].push(row.name);
     return acc;
   }, {});
+}
+
+// SLA is computed on read rather than stored: the policy can change at any time,
+// and a stored badge would then be wrong until something touched the ticket.
+async function slaContext(db) {
+  const policies = await db.list('sla_policies', {});
+  return new Map(policies.map((p) => [p.priority, p]));
+}
+
+// One query for the whole page rather than one per ticket.
+async function firstAgentReplies(db, ticketIds) {
+  if (ticketIds.length === 0) return new Map();
+
+  const rows = await db.sql(
+    `SELECT ticket_id, MIN(created_at) AS first_reply_at
+     FROM ticket_comments
+     WHERE org_id = :orgId AND author_agent_id IS NOT NULL AND ticket_id IN (?)
+     GROUP BY ticket_id`,
+    [ticketIds],
+  );
+  return new Map(rows.map((r) => [r.ticket_id, r.first_reply_at]));
 }
 
 async function createTicket(orgId, data) {
@@ -135,8 +157,19 @@ async function listTickets(orgId, filters) {
   );
 
   const tagsByTicketId = await attachTagsToTickets(db, rows);
+  const policies = await slaContext(db);
+  const replies = await firstAgentReplies(
+    db,
+    rows.map((row) => row.id),
+  );
+  const now = new Date();
+
   return {
-    tickets: rows.map((row) => ({ ...row, tags: tagsByTicketId[row.id] || [] })),
+    tickets: rows.map((row) => ({
+      ...row,
+      tags: tagsByTicketId[row.id] || [],
+      sla: slaService.buildSla(row, policies.get(row.priority), replies.get(row.id), now),
+    })),
     page,
     limit,
   };
@@ -170,7 +203,17 @@ async function getTicketById(orgId, ticketId) {
   );
   const tags = await getTicketTags(db, ticketId);
 
-  return { ...ticket, comments, tags };
+  // The thread is already loaded, so the first agent reply is in hand - no need
+  // to ask the database for it again.
+  const firstReply = comments.find((c) => c.author_agent_id !== null);
+  const policies = await slaContext(db);
+
+  return {
+    ...ticket,
+    comments,
+    tags,
+    sla: slaService.buildSla(ticket, policies.get(ticket.priority), firstReply?.created_at),
+  };
 }
 
 async function updateTicket(orgId, ticketId, updates) {
@@ -182,6 +225,21 @@ async function updateTicket(orgId, ticketId, updates) {
       throw new ApiError(400, `status must be one of: ${STATUSES.join(', ')}`);
     }
     fields.status = updates.status;
+
+    // Stamped on the way in and cleared on the way back out, so SLA measures the
+    // moment a ticket was actually finished rather than the last time anything
+    // about it changed.
+    const finished = updates.status === 'resolved' || updates.status === 'closed';
+    const current = await db.get('tickets', ticketId, 'Ticket not found', {
+      columns: 'status, resolved_at',
+    });
+    const wasFinished = current.status === 'resolved' || current.status === 'closed';
+
+    if (finished && !current.resolved_at) {
+      fields.resolved_at = new Date();
+    } else if (!finished && wasFinished) {
+      fields.resolved_at = null;
+    }
   }
   if (updates.priority !== undefined) {
     if (!PRIORITIES.includes(updates.priority)) {

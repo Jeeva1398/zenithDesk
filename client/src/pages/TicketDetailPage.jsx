@@ -5,6 +5,7 @@ import { listAgents } from '../api/agents';
 import { applyMacro, listMacros } from '../api/macros';
 import { useAuth } from '../context/AuthContext';
 import StyledSelect from '../components/StyledSelect';
+import SlaBadge from '../components/SlaBadge';
 import { cardClass, inputClass, primaryButtonClass } from '../lib/ui';
 
 const STATUSES = ['open', 'pending', 'resolved', 'closed'];
@@ -225,6 +226,15 @@ function TicketDetailPage() {
 
         <aside className="lg:col-span-1">
           <div className={`${cardClass} sticky top-6 flex flex-col gap-4 p-5`}>
+            {ticket.sla && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                  SLA
+                </p>
+                <SlaBadge sla={ticket.sla} showDetail />
+              </div>
+            )}
+
             {macros.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">

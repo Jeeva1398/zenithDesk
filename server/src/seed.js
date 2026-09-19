@@ -4,6 +4,7 @@ const { faker } = require('@faker-js/faker');
 const pool = require('./db/connection');
 const logger = require('./config/logger');
 const { hashPassword } = require('./utils/password');
+const { DEFAULT_POLICIES } = require('./services/sla.service');
 
 const DEMO_PASSWORD = 'password123';
 
@@ -22,12 +23,16 @@ function randomFrom(list) {
 
 async function wipe(connection) {
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM ticket_comments');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM sla_policies');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM macros');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM tickets');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM users');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM agents');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM organizations');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM super_admins');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE ticket_comments AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE sla_policies AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE macros AUTO_INCREMENT = 1');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE tickets AUTO_INCREMENT = 1');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE users AUTO_INCREMENT = 1');
   await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE agents AUTO_INCREMENT = 1');
@@ -53,6 +58,25 @@ async function seedOrganization(connection, agentCount) {
     [orgName],
   );
   const orgId = orgResult.insertId;
+
+  // Organizations created here bypass the signup service, so the SLA defaults it
+  // would have inserted have to be written explicitly - otherwise seeded tickets
+  // have no targets and the SLA column renders blank.
+  await connection.query(
+    `INSERT INTO sla_policies
+       (org_id, priority, first_response_minutes, resolution_minutes, created_at, updated_at)
+     VALUES ?`,
+    [
+      DEFAULT_POLICIES.map((p) => [
+        orgId,
+        p.priority,
+        p.first_response_minutes,
+        p.resolution_minutes,
+        new Date(),
+        new Date(),
+      ]),
+    ],
+  );
 
   const passwordHash = await hashPassword(DEMO_PASSWORD);
   const agents = [];
@@ -85,10 +109,22 @@ async function seedOrganization(connection, agentCount) {
     const assignedAgent = Math.random() > 0.3 ? randomFrom(agents) : null;
     const createdAt = faker.date.recent({ days: 30 });
 
+    // A finished ticket has to carry when it finished, or SLA reads it as never
+    // resolved and shows a breach on a ticket that was closed on time. Mostly
+    // inside the resolution target so seeded data shows a realistic mix of met
+    // and breached rather than one flat colour.
+    const finished = status === 'resolved' || status === 'closed';
+    const resolvedAt = finished
+      ? new Date(
+          createdAt.getTime() +
+            (Math.random() < 0.75 ? 1 : 4) * Math.random() * 12 * 60 * 60 * 1000,
+        )
+      : null;
+
     const [ticketResult] = await connection.query(
       `INSERT INTO tickets
-         (org_id, customer_id, assigned_agent_id, subject, description, category, priority, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (org_id, customer_id, assigned_agent_id, subject, description, category, priority, status, resolved_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orgId,
         customer.id,
@@ -98,16 +134,29 @@ async function seedOrganization(connection, agentCount) {
         randomFrom(CATEGORIES),
         priority,
         status,
+        resolvedAt,
         createdAt,
         createdAt,
       ],
     );
     const ticketId = ticketResult.insertId;
 
+    // Replies used to land anywhere between creation and today, which made every
+    // first-response target look missed once SLA existed. A real queue answers
+    // most tickets quickly and drops a few, so the first reply is usually within
+    // a couple of hours and the rest of the thread follows from there.
     const commentCount = Math.floor(Math.random() * 4);
+    let previousCommentAt = createdAt;
     for (let c = 0; c < commentCount; c += 1) {
       const authorAgent = randomFrom(agents);
-      const commentAt = faker.date.between({ from: createdAt, to: new Date() });
+      const lateReply = c === 0 && Math.random() < 0.25;
+      const commentAt =
+        c === 0
+          ? new Date(
+              createdAt.getTime() + Math.random() * (lateReply ? 36 : 2) * 60 * 60 * 1000,
+            )
+          : faker.date.between({ from: previousCommentAt, to: new Date() });
+      previousCommentAt = commentAt;
       await connection.query(
         `INSERT INTO ticket_comments
            (org_id, ticket_id, author_agent_id, body, created_at, updated_at)

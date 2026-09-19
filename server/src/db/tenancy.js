@@ -10,6 +10,7 @@ const ORG_SCOPED_TABLES = new Set([
   'tags',
   'views',
   'macros',
+  'sla_policies',
   'customer_otps',
 ]);
 

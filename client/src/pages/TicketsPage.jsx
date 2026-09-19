@@ -4,6 +4,7 @@ import { createTicket, listTickets, updateTicket } from '../api/tickets';
 import { listAgents } from '../api/agents';
 import { useAuth } from '../context/AuthContext';
 import Badge from '../components/Badge';
+import SlaBadge from '../components/SlaBadge';
 import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
@@ -244,6 +245,7 @@ function TicketsPage() {
                 <th className="px-5 py-3">Subject</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Priority</th>
+                <th className="px-5 py-3">SLA</th>
                 <th className="px-5 py-3">Tags</th>
                 <th className="px-5 py-3">Assignee</th>
                 <th className="px-5 py-3">Created</th>
@@ -265,6 +267,9 @@ function TicketsPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge type="priority" value={ticket.priority} />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <SlaBadge sla={ticket.sla} />
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex flex-wrap gap-1">

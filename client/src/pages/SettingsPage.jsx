@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import MacrosSection from '../components/MacrosSection';
+import SlaSection from '../components/SlaSection';
 import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
 
 const ROLES = ['agent', 'admin'];
@@ -469,6 +470,7 @@ function SettingsPage() {
       <PasswordSection />
       <AgentsSection />
       <MacrosSection />
+      <SlaSection />
     </div>
   );
 }
