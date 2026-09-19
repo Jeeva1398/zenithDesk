@@ -100,8 +100,8 @@ async function fetchPartitionRollup(orgId, dateKey) {
        t.priority AS priority,
        COUNT(*) AS tickets_created,
        SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS tickets_resolved,
-       AVG(CASE WHEN t.status IN ('resolved', 'closed')
-                THEN TIMESTAMPDIFF(MINUTE, t.created_at, t.updated_at) END) / 60.0 AS avg_resolution_hours,
+       AVG(CASE WHEN t.resolved_at IS NOT NULL
+                THEN TIMESTAMPDIFF(MINUTE, t.created_at, t.resolved_at) END) / 60.0 AS avg_resolution_hours,
        AVG(TIMESTAMPDIFF(MINUTE, t.created_at, fc.first_agent_reply_at)) / 60.0 AS avg_first_response_hours
      FROM tickets t
      LEFT JOIN (
@@ -177,12 +177,19 @@ async function run() {
   logger.info('ETL run complete');
 }
 
-run()
-  .catch((err) => {
-    logger.error(err);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await oltpPool.end();
-    await warehousePool.end();
-  });
+// Only self-executes when run directly (`npm run etl`). Required as a module -
+// by the scheduler - it just exports run(), and must not close the pools the
+// rest of the server is using.
+if (require.main === module) {
+  run()
+    .catch((err) => {
+      logger.error(err);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await oltpPool.end();
+      await warehousePool.end();
+    });
+}
+
+module.exports = { run, JOB_NAME };

@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const pool = require('./db/connection');
 const logger = require('./config/logger');
+const { startEtlSchedule } = require('./warehouse/scheduler');
 const { validateEnv, getCorsOrigins } = require('./config/env');
 const morgan = require('./middlewares/morgan');
 const routes = require('./routes');
@@ -83,6 +84,10 @@ const server = app.listen(port, async () => {
   } catch (err) {
     logger.warn(`Database connection failed (continuing without it): ${err.message}`);
   }
+
+  // No-op unless ETL_SCHEDULE is set, so only an environment that opts in runs
+  // the warehouse rebuild in-process.
+  startEtlSchedule();
 });
 
 server.on('error', (err) => {
