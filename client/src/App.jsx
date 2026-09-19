@@ -11,6 +11,7 @@ import TicketDetailPage from './pages/TicketDetailPage';
 import CustomersPage from './pages/CustomersPage';
 import CustomerDetailPage from './pages/CustomerDetailPage';
 import SettingsPage from './pages/SettingsPage';
+import SearchPage from './pages/SearchPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerTicketsPage from './pages/customer/CustomerTicketsPage';
 import CustomerTicketDetailPage from './pages/customer/CustomerTicketDetailPage';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/:id" element={<CustomerDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/search" element={<SearchPage />} />
         </Route>
       </Route>
 

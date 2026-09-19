@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, useMatch } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import ViewsPanel from './ViewsPanel';
+import SearchBar from './SearchBar';
 
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -18,12 +19,12 @@ function Layout() {
       )}
 
       <div className={`flex min-h-screen flex-col ${onTickets ? 'lg:pl-72' : 'lg:pl-16'}`}>
-        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm lg:hidden">
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
               <path
@@ -33,12 +34,7 @@ function Layout() {
               />
             </svg>
           </button>
-          <input
-            type="search"
-            disabled
-            placeholder="Search (coming soon)"
-            className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-400 placeholder:text-gray-400"
-          />
+          <SearchBar />
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
