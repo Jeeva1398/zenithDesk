@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
 
 async function addComment(orgId, ticketId, agentId, body) {
@@ -6,24 +6,16 @@ async function addComment(orgId, ticketId, agentId, body) {
     throw new ApiError(400, 'body is required');
   }
 
-  const [ticketRows] = await pool.query('SELECT id FROM tickets WHERE id = ? AND org_id = ?', [
-    ticketId,
-    orgId,
-  ]);
-  if (ticketRows.length === 0) {
-    throw new ApiError(404, 'Ticket not found');
-  }
+  const db = forOrg(orgId);
+  await db.get('tickets', ticketId, 'Ticket not found', { columns: 'id' });
 
-  const [result] = await pool.query(
-    `INSERT INTO ticket_comments (org_id, ticket_id, author_agent_id, body, created_at, updated_at)
-     VALUES (?, ?, ?, ?, NOW(), NOW())`,
-    [orgId, ticketId, agentId, body],
-  );
+  const commentId = await db.insert('ticket_comments', {
+    ticket_id: ticketId,
+    author_agent_id: agentId,
+    body,
+  });
 
-  const [rows] = await pool.query('SELECT * FROM ticket_comments WHERE id = ?', [
-    result.insertId,
-  ]);
-  return rows[0];
+  return db.get('ticket_comments', commentId, 'Comment not found');
 }
 
 module.exports = { addComment };

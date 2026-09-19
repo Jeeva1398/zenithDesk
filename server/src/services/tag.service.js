@@ -1,10 +1,8 @@
-const pool = require('../db/connection');
+const { forOrg } = require('../db/orgScope');
 
 async function listTags(orgId) {
-  const [rows] = await pool.query('SELECT id, name FROM tags WHERE org_id = ? ORDER BY name ASC', [
-    orgId,
-  ]);
-  return { tags: rows };
+  const tags = await forOrg(orgId).list('tags', {}, { columns: 'id, name', orderBy: 'name ASC' });
+  return { tags };
 }
 
 module.exports = { listTags };

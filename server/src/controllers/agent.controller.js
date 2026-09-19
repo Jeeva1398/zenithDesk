@@ -27,7 +27,7 @@ const updateMe = catchAsync(async (req, res) => {
 });
 
 const changeMyPassword = catchAsync(async (req, res) => {
-  await agentService.changePassword(req.agent.id, req.body.currentPassword, req.body.newPassword);
+  await agentService.changePassword(req.agent.orgId, req.agent.id, req.body.currentPassword, req.body.newPassword);
   res.status(204).send();
 });
 

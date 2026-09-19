@@ -46,7 +46,7 @@ async function refreshDimensions() {
     );
   }
 
-  const [agents] = await oltpPool.query('SELECT id, org_id, name, email, role FROM agents');
+  const [agents] = await oltpPool.query('/* unscoped: ETL extracts every tenant */ SELECT id, org_id, name, email, role FROM agents');
   for (const agent of agents) {
     await warehousePool.query(
       `INSERT INTO dim_agent (agent_id, org_id, name, email, role, created_at, updated_at)
@@ -57,7 +57,7 @@ async function refreshDimensions() {
   }
 
   const [categories] = await oltpPool.query(
-    "SELECT DISTINCT COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS category FROM tickets",
+    "/* unscoped: ETL extracts every tenant */ SELECT DISTINCT COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS category FROM tickets",
   );
   const categoryNames = new Set(categories.map((row) => row.category));
   categoryNames.add('Uncategorized');
@@ -76,7 +76,8 @@ async function refreshDimensions() {
 // watermark makes that (org, day) partition stale and due for a full rebuild.
 async function findAffectedPartitions(watermark) {
   const [rows] = await oltpPool.query(
-    `SELECT DISTINCT org_id, DATE_FORMAT(created_at, '%Y-%m-%d') AS date_key
+    `/* unscoped: ETL extracts every tenant */
+     SELECT DISTINCT org_id, DATE_FORMAT(created_at, '%Y-%m-%d') AS date_key
        FROM tickets
        WHERE updated_at > ?
      UNION

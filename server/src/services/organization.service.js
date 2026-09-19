@@ -4,7 +4,7 @@ const { hashPassword } = require('../utils/password');
 const { signToken, TOKEN_TYPES } = require('../utils/token');
 
 async function signup({ orgName, adminName, adminEmail, adminPassword }) {
-  const [existing] = await pool.query('SELECT id FROM agents WHERE email = ?', [adminEmail]);
+  const [existing] = await pool.query('/* unscoped: agent email is globally unique, so this spans orgs */ SELECT id FROM agents WHERE email = ?', [adminEmail]);
   if (existing.length > 0) {
     throw new ApiError(409, 'An agent with this email already exists');
   }

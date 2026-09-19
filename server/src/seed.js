@@ -21,18 +21,18 @@ function randomFrom(list) {
 }
 
 async function wipe(connection) {
-  await connection.query('DELETE FROM ticket_comments');
-  await connection.query('DELETE FROM tickets');
-  await connection.query('DELETE FROM users');
-  await connection.query('DELETE FROM agents');
-  await connection.query('DELETE FROM organizations');
-  await connection.query('DELETE FROM super_admins');
-  await connection.query('ALTER TABLE ticket_comments AUTO_INCREMENT = 1');
-  await connection.query('ALTER TABLE tickets AUTO_INCREMENT = 1');
-  await connection.query('ALTER TABLE users AUTO_INCREMENT = 1');
-  await connection.query('ALTER TABLE agents AUTO_INCREMENT = 1');
-  await connection.query('ALTER TABLE organizations AUTO_INCREMENT = 1');
-  await connection.query('ALTER TABLE super_admins AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM ticket_comments');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM tickets');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM users');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM agents');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM organizations');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ DELETE FROM super_admins');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE ticket_comments AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE tickets AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE users AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE agents AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE organizations AUTO_INCREMENT = 1');
+  await connection.query('/* unscoped: seed wipes and reseeds every tenant */ ALTER TABLE super_admins AUTO_INCREMENT = 1');
 }
 
 async function seedSuperAdmin(connection) {

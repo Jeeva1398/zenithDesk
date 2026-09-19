@@ -1,36 +1,30 @@
-const pool = require('../db/connection');
+const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
 
 async function listCustomers(orgId) {
-  const [rows] = await pool.query(
+  const customers = await forOrg(orgId).sql(
     `SELECT u.id, u.name, u.email, u.created_at,
        COUNT(t.id) AS ticket_count,
        MAX(t.created_at) AS last_ticket_at
      FROM users u
-     LEFT JOIN tickets t ON t.customer_id = u.id
-     WHERE u.org_id = ?
+     LEFT JOIN tickets t ON t.customer_id = u.id AND t.org_id = :orgId
+     WHERE u.org_id = :orgId
      GROUP BY u.id
      ORDER BY u.name ASC`,
-    [orgId],
   );
-  return { customers: rows };
+  return { customers };
 }
 
 async function getCustomerById(orgId, customerId) {
-  const [rows] = await pool.query(
-    'SELECT id, name, email, created_at FROM users WHERE id = ? AND org_id = ?',
-    [customerId, orgId],
-  );
-  const customer = rows[0];
-  if (!customer) {
-    throw new ApiError(404, 'Customer not found');
-  }
+  const db = forOrg(orgId);
+  const customer = await db.get('users', customerId, 'Customer not found', {
+    columns: 'id, name, email, created_at',
+  });
 
-  const [tickets] = await pool.query(
-    `SELECT id, subject, status, priority, created_at
-     FROM tickets WHERE customer_id = ? AND org_id = ?
-     ORDER BY created_at DESC`,
-    [customerId, orgId],
+  const tickets = await db.list(
+    'tickets',
+    { customer_id: customerId },
+    { columns: 'id, subject, status, priority, created_at', orderBy: 'created_at DESC' },
   );
 
   return { ...customer, tickets };
@@ -41,77 +35,46 @@ async function createCustomer(orgId, { name, email }) {
     throw new ApiError(400, 'name and email are required');
   }
 
-  const [existing] = await pool.query('SELECT id FROM users WHERE org_id = ? AND email = ?', [
-    orgId,
-    email,
-  ]);
-  if (existing.length > 0) {
+  const db = forOrg(orgId);
+  if (await db.exists('users', { email })) {
     throw new ApiError(409, 'A customer with this email already exists');
   }
 
-  const [result] = await pool.query(
-    'INSERT INTO users (org_id, name, email, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-    [orgId, name, email],
-  );
-
-  return getCustomerById(orgId, result.insertId);
+  const customerId = await db.insert('users', { name, email });
+  return getCustomerById(orgId, customerId);
 }
 
 async function updateCustomer(orgId, customerId, { name, email }) {
-  if (email !== undefined) {
-    const [dupe] = await pool.query(
-      'SELECT id FROM users WHERE org_id = ? AND email = ? AND id <> ?',
-      [orgId, email, customerId],
-    );
-    if (dupe.length > 0) {
-      throw new ApiError(409, 'Another customer already uses this email');
-    }
+  const db = forOrg(orgId);
+
+  if (email !== undefined && (await db.exists('users', { email, id: { not: customerId } }))) {
+    throw new ApiError(409, 'Another customer already uses this email');
   }
 
-  const setClauses = [];
-  const params = [];
+  const updates = {};
   if (name !== undefined) {
-    setClauses.push('name = ?');
-    params.push(name);
+    updates.name = name;
   }
   if (email !== undefined) {
-    setClauses.push('email = ?');
-    params.push(email);
+    updates.email = email;
   }
-  if (setClauses.length === 0) {
+  if (Object.keys(updates).length === 0) {
     throw new ApiError(400, 'No valid fields to update');
   }
-  setClauses.push('updated_at = NOW()');
 
-  const [result] = await pool.query(
-    `UPDATE users SET ${setClauses.join(', ')} WHERE id = ? AND org_id = ?`,
-    [...params, customerId, orgId],
-  );
-  if (result.affectedRows === 0) {
-    throw new ApiError(404, 'Customer not found');
-  }
-
+  await db.update('users', customerId, updates, 'Customer not found');
   return getCustomerById(orgId, customerId);
 }
 
 async function deleteCustomer(orgId, customerId) {
-  const [rows] = await pool.query('SELECT id FROM users WHERE id = ? AND org_id = ?', [
-    customerId,
-    orgId,
-  ]);
-  if (rows.length === 0) {
-    throw new ApiError(404, 'Customer not found');
-  }
+  const db = forOrg(orgId);
+  await db.get('users', customerId, 'Customer not found', { columns: 'id' });
 
-  const [ticketRows] = await pool.query(
-    'SELECT COUNT(*) AS count FROM tickets WHERE customer_id = ? AND org_id = ?',
-    [customerId, orgId],
-  );
-  if (ticketRows[0].count > 0) {
+  if ((await db.count('tickets', { customer_id: customerId })) > 0) {
     throw new ApiError(409, 'Cannot delete a customer with existing tickets');
   }
 
-  await pool.query('DELETE FROM users WHERE id = ? AND org_id = ?', [customerId, orgId]);
+  await db.remove('users', customerId, 'Customer not found');
 }
 
 module.exports = {

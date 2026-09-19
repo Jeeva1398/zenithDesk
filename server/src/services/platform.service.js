@@ -13,7 +13,8 @@ async function listOrganizations() {
 
 async function listAgents() {
   const [rows] = await pool.query(
-    `SELECT agents.id, agents.org_id, agents.name, agents.email, agents.role, agents.created_at,
+    `/* unscoped: super-admin platform view across all tenants */
+     SELECT agents.id, agents.org_id, agents.name, agents.email, agents.role, agents.created_at,
             organizations.name AS org_name
      FROM agents
      JOIN organizations ON organizations.id = agents.org_id
@@ -29,7 +30,8 @@ async function listTickets(filters) {
   const { page, limit, offset } = paginationParams(filters);
 
   const [rows] = await pool.query(
-    `SELECT tickets.*, organizations.name AS org_name
+    `/* unscoped: super-admin platform view across all tenants */
+     SELECT tickets.*, organizations.name AS org_name
      FROM tickets
      JOIN organizations ON organizations.id = tickets.org_id
      ORDER BY tickets.created_at DESC

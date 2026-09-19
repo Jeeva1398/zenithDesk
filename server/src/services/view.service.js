@@ -1,11 +1,8 @@
-const pool = require('../db/connection');
+const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
 
 async function listViews(orgId) {
-  const [rows] = await pool.query(
-    'SELECT * FROM views WHERE org_id = ? ORDER BY created_at ASC',
-    [orgId],
-  );
+  const rows = await forOrg(orgId).list('views', {}, { orderBy: 'created_at ASC' });
   return { views: rows.map(parseView) };
 }
 
@@ -14,62 +11,39 @@ async function createView(orgId, agentId, { name, filters }) {
     throw new ApiError(400, 'name and filters are required');
   }
 
-  const [result] = await pool.query(
-    `INSERT INTO views (org_id, created_by_agent_id, name, filters, created_at, updated_at)
-     VALUES (?, ?, ?, ?, NOW(), NOW())`,
-    [orgId, agentId, name, JSON.stringify(filters)],
-  );
+  const db = forOrg(orgId);
+  const viewId = await db.insert('views', {
+    created_by_agent_id: agentId,
+    name,
+    filters: JSON.stringify(filters),
+  });
 
-  return getView(orgId, result.insertId);
+  return getView(db, viewId);
 }
 
 async function updateView(orgId, viewId, { name, filters }) {
-  const setClauses = [];
-  const params = [];
-
+  const updates = {};
   if (name !== undefined) {
-    setClauses.push('name = ?');
-    params.push(name);
+    updates.name = name;
   }
   if (filters !== undefined) {
-    setClauses.push('filters = ?');
-    params.push(JSON.stringify(filters));
+    updates.filters = JSON.stringify(filters);
   }
-  if (setClauses.length === 0) {
+  if (Object.keys(updates).length === 0) {
     throw new ApiError(400, 'No valid fields to update');
   }
 
-  setClauses.push('updated_at = NOW()');
-  const [result] = await pool.query(
-    `UPDATE views SET ${setClauses.join(', ')} WHERE id = ? AND org_id = ?`,
-    [...params, viewId, orgId],
-  );
-  if (result.affectedRows === 0) {
-    throw new ApiError(404, 'View not found');
-  }
-
-  return getView(orgId, viewId);
+  const db = forOrg(orgId);
+  await db.update('views', viewId, updates, 'View not found');
+  return getView(db, viewId);
 }
 
 async function deleteView(orgId, viewId) {
-  const [result] = await pool.query('DELETE FROM views WHERE id = ? AND org_id = ?', [
-    viewId,
-    orgId,
-  ]);
-  if (result.affectedRows === 0) {
-    throw new ApiError(404, 'View not found');
-  }
+  await forOrg(orgId).remove('views', viewId, 'View not found');
 }
 
-async function getView(orgId, viewId) {
-  const [rows] = await pool.query('SELECT * FROM views WHERE id = ? AND org_id = ?', [
-    viewId,
-    orgId,
-  ]);
-  if (!rows[0]) {
-    throw new ApiError(404, 'View not found');
-  }
-  return parseView(rows[0]);
+async function getView(db, viewId) {
+  return parseView(await db.get('views', viewId, 'View not found'));
 }
 
 function parseView(row) {

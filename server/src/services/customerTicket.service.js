@@ -1,50 +1,43 @@
-const pool = require('../db/connection');
+const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 
-async function getCustomerId(orgId, email) {
-  const [rows] = await pool.query('SELECT id FROM users WHERE org_id = ? AND email = ?', [
-    orgId,
-    email,
-  ]);
-  if (rows.length === 0) {
-    throw new ApiError(404, 'Customer not found');
-  }
-  return rows[0].id;
+async function getCustomerId(db, email) {
+  const customer = await db.get('users', { email }, 'Customer not found', { columns: 'id' });
+  return customer.id;
 }
 
+// An address with no customer row has no tickets rather than being an error,
+// which is what the JOIN this replaced did.
 async function listTickets(orgId, email) {
-  const [rows] = await pool.query(
-    `SELECT t.* FROM tickets t
-     JOIN users u ON u.id = t.customer_id
-     WHERE u.org_id = ? AND u.email = ?
-     ORDER BY t.created_at DESC`,
-    [orgId, email],
-  );
-  return rows;
+  const db = forOrg(orgId);
+  const customer = await db.find('users', { email }, { columns: 'id' });
+  if (!customer) {
+    return [];
+  }
+  return db.list('tickets', { customer_id: customer.id }, { orderBy: 'created_at DESC' });
 }
 
 async function getTicketById(orgId, email, ticketId) {
-  const [rows] = await pool.query(
-    `SELECT t.* FROM tickets t
-     JOIN users u ON u.id = t.customer_id
-     WHERE u.org_id = ? AND u.email = ? AND t.id = ?`,
-    [orgId, email, ticketId],
-  );
-  const ticket = rows[0];
+  const db = forOrg(orgId);
+  const customer = await db.find('users', { email }, { columns: 'id' });
+
+  const ticket = customer
+    ? await db.find('tickets', { id: ticketId, customer_id: customer.id })
+    : null;
   if (!ticket) {
     throw new ApiError(404, 'Ticket not found');
   }
 
-  const [comments] = await pool.query(
+  const comments = await db.sql(
     `SELECT tc.*,
        CASE WHEN tc.author_agent_id IS NOT NULL THEN 'agent' ELSE 'customer' END AS author_type,
        COALESCE(a.name, u.name) AS author_name
      FROM ticket_comments tc
-     LEFT JOIN agents a ON a.id = tc.author_agent_id
-     LEFT JOIN users u ON u.id = tc.author_customer_id
-     WHERE tc.ticket_id = ?
+     LEFT JOIN agents a ON a.id = tc.author_agent_id AND a.org_id = :orgId
+     LEFT JOIN users u ON u.id = tc.author_customer_id AND u.org_id = :orgId
+     WHERE tc.ticket_id = ? AND tc.org_id = :orgId
      ORDER BY tc.created_at ASC`,
     [ticket.id],
   );
@@ -62,15 +55,16 @@ async function createTicket(orgId, email, data) {
     throw new ApiError(400, `priority must be one of: ${PRIORITIES.join(', ')}`);
   }
 
-  const customerId = await getCustomerId(orgId, email);
+  const db = forOrg(orgId);
+  const ticketId = await db.insert('tickets', {
+    customer_id: await getCustomerId(db, email),
+    subject,
+    description,
+    category: category || null,
+    priority: priority || 'medium',
+  });
 
-  const [result] = await pool.query(
-    `INSERT INTO tickets (org_id, customer_id, subject, description, category, priority, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-    [orgId, customerId, subject, description, category || null, priority || 'medium'],
-  );
-
-  return getTicketById(orgId, email, result.insertId);
+  return getTicketById(orgId, email, ticketId);
 }
 
 async function addComment(orgId, email, ticketId, body) {
@@ -78,26 +72,20 @@ async function addComment(orgId, email, ticketId, body) {
     throw new ApiError(400, 'body is required');
   }
 
-  const customerId = await getCustomerId(orgId, email);
+  const db = forOrg(orgId);
+  const customerId = await getCustomerId(db, email);
 
-  const [ticketRows] = await pool.query(
-    'SELECT id FROM tickets WHERE id = ? AND org_id = ? AND customer_id = ?',
-    [ticketId, orgId, customerId],
-  );
-  if (ticketRows.length === 0) {
-    throw new ApiError(404, 'Ticket not found');
-  }
+  await db.get('tickets', { id: ticketId, customer_id: customerId }, 'Ticket not found', {
+    columns: 'id',
+  });
 
-  const [result] = await pool.query(
-    `INSERT INTO ticket_comments (org_id, ticket_id, author_customer_id, body, created_at, updated_at)
-     VALUES (?, ?, ?, ?, NOW(), NOW())`,
-    [orgId, ticketId, customerId, body],
-  );
+  const commentId = await db.insert('ticket_comments', {
+    ticket_id: ticketId,
+    author_customer_id: customerId,
+    body,
+  });
 
-  const [rows] = await pool.query('SELECT * FROM ticket_comments WHERE id = ?', [
-    result.insertId,
-  ]);
-  return rows[0];
+  return db.get('ticket_comments', commentId, 'Comment not found');
 }
 
 module.exports = { listTickets, getTicketById, createTicket, addComment };

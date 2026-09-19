@@ -5,7 +5,8 @@ const { signToken, TOKEN_TYPES } = require('../utils/token');
 
 async function login({ email, password }) {
   const [rows] = await pool.query(
-    `SELECT agents.*, organizations.name AS org_name
+    `/* unscoped: login is by email alone, with no org context yet */
+     SELECT agents.*, organizations.name AS org_name
      FROM agents
      JOIN organizations ON organizations.id = agents.org_id
      WHERE agents.email = ?`,
