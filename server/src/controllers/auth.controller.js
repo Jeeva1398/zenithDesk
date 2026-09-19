@@ -12,4 +12,17 @@ const login = catchAsync(async (req, res) => {
   res.status(200).json(result);
 });
 
-module.exports = { login };
+const refresh = catchAsync(async (req, res) => {
+  const result = await authService.refresh(req.body.refreshToken);
+  res.status(200).json(result);
+});
+
+// Always 204, whether or not the token was still live. Telling a caller that
+// the token they handed over was already dead is information they cannot use
+// and an attacker can.
+const logout = catchAsync(async (req, res) => {
+  await authService.logout(req.body.refreshToken);
+  res.status(204).send();
+});
+
+module.exports = { login, refresh, logout };

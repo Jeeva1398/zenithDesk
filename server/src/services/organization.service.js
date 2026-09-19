@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const { hashPassword } = require('../utils/password');
 const { signToken, TOKEN_TYPES } = require('../utils/token');
 const { DEFAULT_POLICIES } = require('./sla.service');
+const refreshTokenService = require('./refreshToken.service');
 
 async function signup({ orgName, adminName, adminEmail, adminPassword }) {
   const [existing] = await pool.query('/* unscoped: agent email is globally unique, so this spans orgs */ SELECT id FROM agents WHERE email = ?', [adminEmail]);
@@ -52,6 +53,11 @@ async function signup({ orgName, adminName, adminEmail, adminPassword }) {
     const agentId = agentResult.insertId;
     return {
       token: signToken({ typ: TOKEN_TYPES.AGENT, agentId, orgId, role: 'admin', email: adminEmail }),
+      // Signing up signs you in, so it returns the same session shape as login -
+      // otherwise the first short-lived access token would expire with nothing
+      // to renew it. Issued after the commit, because the scope helper uses the
+      // pool rather than this transaction's connection.
+      refreshToken: await refreshTokenService.issue(orgId, agentId),
       agent: { id: agentId, orgId, orgName, name: adminName, email: adminEmail, role: 'admin' },
     };
   } catch (err) {

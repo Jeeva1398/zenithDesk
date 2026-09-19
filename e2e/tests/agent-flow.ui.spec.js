@@ -55,7 +55,40 @@ test.describe('agent dashboard', () => {
     await expect(page.getByText(reply)).toBeVisible();
   });
 
-  test('a stale token returns the agent to login instead of an error page', async ({
+  // A stale access token used to mean the session was over. Now that access
+  // tokens are short-lived by design, expiring is the ordinary case: the app
+  // renews in place and the agent never sees it.
+  test('a stale access token is renewed without signing the agent out', async ({
+    page,
+    request,
+  }) => {
+    const org = await createOrg(request);
+    const ticket = await createTicket(request, org.token);
+    await loginAsAgent(page, org);
+
+    const before = await page.evaluate(
+      () => JSON.parse(localStorage.getItem('zenithdesk_auth')).refreshToken,
+    );
+    expect(before).toBeTruthy();
+
+    await page.evaluate(() => {
+      const stored = JSON.parse(localStorage.getItem('zenithdesk_auth'));
+      stored.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudElkIjoxfQ.not-a-valid-signature';
+      localStorage.setItem('zenithdesk_auth', JSON.stringify(stored));
+    });
+
+    await page.goto('/tickets');
+
+    await expect(page).toHaveURL(/\/tickets$/);
+    await expect(page.getByText(ticket.subject)).toBeVisible();
+
+    // Rotation means the stored pair must both have moved on.
+    const after = await page.evaluate(() => JSON.parse(localStorage.getItem('zenithdesk_auth')));
+    expect(after.refreshToken).not.toBe(before);
+    expect(after.token).not.toContain('not-a-valid-signature');
+  });
+
+  test('when the refresh token is dead too, the agent is returned to login', async ({
     page,
     request,
   }) => {
@@ -63,12 +96,12 @@ test.describe('agent dashboard', () => {
     await createTicket(request, org.token);
     await loginAsAgent(page, org);
 
-    // Stand in for a token that has expired or predates a signing change.
-    // Without the onUnauthorized hook the app kept believing it was signed in
-    // and rendered per-page errors instead.
+    // Both halves unusable: nothing left to renew with, so this is a real
+    // sign-out rather than a renewable expiry.
     await page.evaluate(() => {
       const stored = JSON.parse(localStorage.getItem('zenithdesk_auth'));
       stored.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudElkIjoxfQ.not-a-valid-signature';
+      stored.refreshToken = 'f'.repeat(64);
       localStorage.setItem('zenithdesk_auth', JSON.stringify(stored));
     });
 

@@ -13,3 +13,17 @@ export function login({ email, password }) {
     body: { email, password },
   });
 }
+
+export function refreshSession(refreshToken) {
+  return request('/auth/refresh', {
+    method: 'POST',
+    body: { refreshToken },
+  });
+}
+
+export function logoutSession(refreshToken) {
+  return request('/auth/logout', {
+    method: 'POST',
+    body: { refreshToken },
+  });
+}

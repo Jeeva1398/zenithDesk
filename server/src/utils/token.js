@@ -23,7 +23,11 @@ function signToken(payload, options = {}) {
   }
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: options.expiresIn || process.env.JWT_EXPIRES_IN || '1d',
+    // Short by default. An access token cannot be revoked - it is valid until
+    // it expires - so its lifetime is the window a stolen one is useful for.
+    // A day was only tolerable while it was the whole session; refresh tokens
+    // now carry the session, and those can be revoked.
+    expiresIn: options.expiresIn || process.env.JWT_EXPIRES_IN || '15m',
   });
 }
 
