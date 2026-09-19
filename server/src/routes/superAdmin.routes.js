@@ -1,9 +1,9 @@
 const express = require('express');
 const superAdminController = require('../controllers/superAdmin.controller');
-const { authLimiter } = require('../middlewares/rateLimiters');
+const { loginLimiter } = require('../middlewares/rateLimiters');
 
 const router = express.Router();
 
-router.post('/login', authLimiter, superAdminController.login);
+router.post('/login', loginLimiter, superAdminController.login);
 
 module.exports = router;

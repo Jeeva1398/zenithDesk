@@ -1,9 +1,9 @@
 const express = require('express');
 const authController = require('../controllers/auth.controller');
-const { authLimiter } = require('../middlewares/rateLimiters');
+const { loginLimiter } = require('../middlewares/rateLimiters');
 
 const router = express.Router();
 
-router.post('/login', authLimiter, authController.login);
+router.post('/login', loginLimiter, authController.login);
 
 module.exports = router;
