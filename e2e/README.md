@@ -16,9 +16,11 @@ npm run report      # open the HTML report from the last CI-style run
 
 ## What it assumes
 
-Database credentials are read from `server/.env` (`DB_HOST`, `DB_PORT`, `DB_USER`,
-`DB_PASSWORD`). Nothing else is taken from your environment — ports, the JWT
-secret and the schema name are all fixed in `test-env.js`.
+Database credentials come from the environment, falling back to `server/.env`
+(`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`) — which is how the same suite
+runs locally and in CI, where there is no `.env` file. Nothing else is taken
+from your environment: ports, the JWT secret and the schema name are all fixed
+in `test-env.js`.
 
 ## How a run works
 

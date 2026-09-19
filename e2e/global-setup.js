@@ -74,7 +74,8 @@ async function waitForHealth({ timeoutMs = 30_000 } = {}) {
 module.exports = async () => {
   if (!process.env.DB_USER) {
     throw new Error(
-      'server/.env is missing database settings — the e2e suite reads them to create its own schema',
+      'No database credentials found. Set DB_HOST/DB_PORT/DB_USER/DB_PASSWORD in the ' +
+        'environment, or in server/.env — the suite uses them to create its own schema.',
     );
   }
 
