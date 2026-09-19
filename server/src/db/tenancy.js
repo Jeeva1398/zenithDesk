@@ -9,6 +9,7 @@ const ORG_SCOPED_TABLES = new Set([
   'ticket_comments',
   'tags',
   'views',
+  'macros',
   'customer_otps',
 ]);
 

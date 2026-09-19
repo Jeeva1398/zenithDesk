@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { addComment, getTicket, updateTicket } from '../api/tickets';
 import { listAgents } from '../api/agents';
+import { applyMacro, listMacros } from '../api/macros';
 import { useAuth } from '../context/AuthContext';
 import StyledSelect from '../components/StyledSelect';
 import { cardClass, inputClass, primaryButtonClass } from '../lib/ui';
@@ -28,6 +29,8 @@ function TicketDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [commentBody, setCommentBody] = useState('');
+  const [macros, setMacros] = useState([]);
+  const [applyingMacro, setApplyingMacro] = useState(false);
   const [commentError, setCommentError] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
@@ -55,6 +58,28 @@ function TicketDetailPage() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    listMacros(token)
+      .then((result) => setMacros(result.macros))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // One request applies every action the macro carries, so the ticket comes back
+  // fully updated rather than the page reassembling it from several responses.
+  const handleApplyMacro = async (macroId) => {
+    if (!macroId) return;
+    setApplyingMacro(true);
+    setError('');
+    try {
+      setTicket(await applyMacro(token, id, macroId));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setApplyingMacro(false);
+    }
+  };
 
   const handleFieldUpdate = async (field, value) => {
     setUpdating(true);
@@ -200,6 +225,28 @@ function TicketDetailPage() {
 
         <aside className="lg:col-span-1">
           <div className={`${cardClass} sticky top-6 flex flex-col gap-4 p-5`}>
+            {macros.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Apply macro
+                </p>
+                <select
+                  aria-label="Apply macro"
+                  value=""
+                  disabled={applyingMacro || updating}
+                  onChange={(e) => handleApplyMacro(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                >
+                  <option value="">Choose a macro…</option>
+                  {macros.map((macro) => (
+                    <option key={macro.id} value={macro.id}>
+                      {macro.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
                 Status

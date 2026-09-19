@@ -190,7 +190,19 @@ async function updateTicket(orgId, ticketId, updates) {
     fields.priority = updates.priority;
   }
   if (updates.assignedAgentId !== undefined) {
-    fields.assigned_agent_id = updates.assignedAgentId;
+    // The UPDATE is org-scoped, so a caller can only reach their own ticket - but
+    // nothing checked the value being written, which let an agent assign their
+    // ticket to an agent in another organization. The scoping guard cannot catch
+    // this: the predicate is right, the value is not. Look the agent up through
+    // the org scope so a foreign id is simply not found.
+    if (updates.assignedAgentId === null) {
+      fields.assigned_agent_id = null;
+    } else {
+      await db.get('agents', updates.assignedAgentId, 'Assigned agent not found', {
+        columns: 'id',
+      });
+      fields.assigned_agent_id = updates.assignedAgentId;
+    }
   }
 
   if (Object.keys(fields).length === 0 && updates.tagNames === undefined) {
