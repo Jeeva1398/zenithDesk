@@ -1,18 +1,20 @@
 const express = require('express');
 const authenticate = require('../middlewares/authenticate');
+const authenticateAgentOrService = require('../middlewares/authenticateService');
 const ticketController = require('../controllers/ticket.controller');
 const commentController = require('../controllers/comment.controller');
 const macroController = require('../controllers/macro.controller');
 
 const router = express.Router();
 
-router.use(authenticate);
+// Auth is per-route rather than router-wide, because creating a ticket is the
+// one thing a service token may do. Everything else stays agent-only.
+router.post('/', authenticateAgentOrService, ticketController.createTicket);
 
-router.post('/', ticketController.createTicket);
-router.get('/', ticketController.listTickets);
-router.get('/:id', ticketController.getTicket);
-router.patch('/:id', ticketController.updateTicket);
-router.post('/:id/comments', commentController.addComment);
-router.post('/:id/apply-macro', macroController.applyMacro);
+router.get('/', authenticate, ticketController.listTickets);
+router.get('/:id', authenticate, ticketController.getTicket);
+router.patch('/:id', authenticate, ticketController.updateTicket);
+router.post('/:id/comments', authenticate, commentController.addComment);
+router.post('/:id/apply-macro', authenticate, macroController.applyMacro);
 
 module.exports = router;

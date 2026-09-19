@@ -12,7 +12,8 @@
     "migrate:warehouse:rollback": "knex migrate:rollback --knexfile ./src/warehouse/knexfile.js",
     "seed": "node src/seed.js",
     "etl": "node src/warehouse/etl.js",
-    "test": "npm --prefix ../e2e test"
+    "test": "npm --prefix ../e2e test",
+    "token:service": "node src/scripts/mintServiceToken.js"
   },
   "keywords": [],
   "author": "",

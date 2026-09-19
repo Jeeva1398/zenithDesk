@@ -11,6 +11,10 @@ const TOKEN_TYPES = {
   AGENT: 'agent',
   CUSTOMER: 'customer',
   SUPER_ADMIN: 'super_admin',
+  // A machine caller (the chatbot) that may create a ticket on a customer's
+  // behalf and do nothing else. Deliberately not an agent token: that one can
+  // read every ticket and customer in the org.
+  SERVICE: 'service',
 };
 
 function signToken(payload, options = {}) {
