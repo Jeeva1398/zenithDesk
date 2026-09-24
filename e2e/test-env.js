@@ -14,6 +14,9 @@ const SERVER_DIR = path.resolve(__dirname, '..', 'server');
 const CLIENT_DIR = path.resolve(__dirname, '..', 'client');
 const SERVER_LOG = path.resolve(__dirname, '.tmp', 'server.log');
 const PID_FILE = path.resolve(__dirname, '.tmp', 'server.pid');
+// Attachments written by the suite land here, inside the throwaway .tmp tree,
+// never in the dev server's upload directory.
+const UPLOAD_DIR = path.resolve(__dirname, '.tmp', 'uploads');
 
 // Long enough to satisfy the server's own 32-character minimum. Test-only, and
 // deliberately not read from .env so a run can't accidentally mint tokens that
@@ -40,6 +43,7 @@ function serverEnv(dbName = TEST_DB_NAME) {
     CORS_ORIGINS: CLIENT_URL,
     TRUSTED_SERVICE_IPS,
     TRUST_PROXY_HOPS: '0',
+    UPLOAD_DIR,
   };
 }
 
@@ -53,6 +57,7 @@ module.exports = {
   CLIENT_DIR,
   SERVER_LOG,
   PID_FILE,
+  UPLOAD_DIR,
   JWT_SECRET,
   TRUSTED_SERVICE_IPS,
   serverEnv,

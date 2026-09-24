@@ -23,3 +23,7 @@ export function updateTicket(token, id, updates) {
 export function addComment(token, id, body) {
   return request(`/tickets/${id}/comments`, { method: 'POST', body: { body }, token });
 }
+
+export function downloadAttachment(token, ticketId, attachmentId) {
+  return request(`/tickets/${ticketId}/attachments/${attachmentId}`, { token, responseType: 'blob' });
+}

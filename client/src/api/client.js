@@ -47,7 +47,10 @@ function refreshOnce(failedToken) {
   return inFlightRefresh;
 }
 
-async function request(path, { method = 'GET', body, token, retried = false } = {}) {
+// `responseType: 'blob'` is for file downloads: an attachment needs the bearer
+// token like any other call, so it can't be a plain link, and its body is
+// bytes rather than JSON.
+async function request(path, { method = 'GET', body, token, retried = false, responseType } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -58,6 +61,10 @@ async function request(path, { method = 'GET', body, token, retried = false } = 
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  if (res.ok && responseType === 'blob') {
+    return res.blob();
+  }
 
   const data = await res.json().catch(() => ({}));
 
@@ -71,7 +78,7 @@ async function request(path, { method = 'GET', body, token, retried = false } = 
       if (refreshHandler && !retried) {
         const renewed = await refreshOnce(token).catch(() => null);
         if (renewed && renewed !== token) {
-          return request(path, { method, body, token: renewed, retried: true });
+          return request(path, { method, body, token: renewed, retried: true, responseType });
         }
       }
       unauthorizedHandlers.forEach((handler) => handler(token));

@@ -1,6 +1,7 @@
 const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
 const slaService = require('./sla.service');
+const attachmentService = require('./attachment.service');
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 const STATUSES = ['open', 'pending', 'resolved', 'closed'];
@@ -202,6 +203,7 @@ async function getTicketById(orgId, ticketId) {
     [ticketId],
   );
   const tags = await getTicketTags(db, ticketId);
+  const attachments = await attachmentService.listForTicket(orgId, ticket.id);
 
   // The thread is already loaded, so the first agent reply is in hand - no need
   // to ask the database for it again.
@@ -212,6 +214,7 @@ async function getTicketById(orgId, ticketId) {
     ...ticket,
     comments,
     tags,
+    attachments,
     sla: slaService.buildSla(ticket, policies.get(ticket.priority), firstReply?.created_at),
   };
 }

@@ -6,6 +6,7 @@ import { applyMacro, listMacros } from '../api/macros';
 import { useAuth } from '../context/AuthContext';
 import StyledSelect from '../components/StyledSelect';
 import SlaBadge from '../components/SlaBadge';
+import TicketAttachments from '../components/TicketAttachments';
 import { cardClass, inputClass, primaryButtonClass } from '../lib/ui';
 
 const STATUSES = ['open', 'pending', 'resolved', 'closed'];
@@ -173,6 +174,8 @@ function TicketDetailPage() {
               {ticket.description}
             </p>
           </div>
+
+          <TicketAttachments ticketId={ticket.id} attachments={ticket.attachments || []} />
 
           <div className="mt-8">
             <h2 className="mb-4 text-base font-semibold text-gray-900">
