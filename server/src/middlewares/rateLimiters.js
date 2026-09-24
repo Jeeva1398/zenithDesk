@@ -111,8 +111,20 @@ const otpVerifyLimiter = rateLimit({
   handler: rejectWith('Too many verification attempts — please wait before trying again.'),
 });
 
+// The public widget-config lookup. Keys are 128 random bits, so guessing is
+// hopeless anyway; this keeps anyone from trying at volume. The chatbot caches
+// what it fetches, so a real widget calls this a few times an hour, not per
+// message.
+const widgetConfigLimiter = rateLimit({
+  ...common,
+  windowMs: 15 * 60 * 1000,
+  limit: 120,
+  handler: rejectWith('Too many widget lookups — please try again shortly.'),
+});
+
 module.exports = {
   generalLimiter,
+  widgetConfigLimiter,
   loginLimiter,
   signupLimiter,
   lookupLimiter,

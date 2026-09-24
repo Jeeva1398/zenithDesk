@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const { hashPassword } = require('../utils/password');
 const { signToken, TOKEN_TYPES } = require('../utils/token');
 const { DEFAULT_POLICIES } = require('./sla.service');
+const chatWidgetService = require('./chatWidget.service');
 const refreshTokenService = require('./refreshToken.service');
 
 async function signup({ orgName, adminName, adminEmail, adminPassword }) {
@@ -47,6 +48,10 @@ async function signup({ orgName, adminName, adminEmail, adminPassword }) {
         ]),
       ],
     );
+
+    // Same reasoning: every org has exactly one widget row, so its embed key
+    // exists from the first moment an admin opens Settings.
+    await chatWidgetService.seedDefaults(connection, orgId);
 
     await connection.commit();
 

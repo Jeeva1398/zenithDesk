@@ -13,6 +13,7 @@ const ORG_SCOPED_TABLES = new Set([
   'sla_policies',
   'refresh_tokens',
   'customer_otps',
+  'chat_widget_settings',
 ]);
 
 // A handful of queries are cross-tenant on purpose: the super-admin platform
