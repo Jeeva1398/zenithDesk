@@ -3,6 +3,7 @@ import { Link, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ViewsPanel from './ViewsPanel';
 import { navItemActiveClass, navItemClass, navItemDisabledClass } from '../lib/ui';
+import Logo, { LogoMark } from './Logo';
 
 const ICONS = {
   dashboard: (
@@ -29,6 +30,12 @@ const ICONS = {
       <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.41-1.41a7.002 7.002 0 0 0-13.076.003Z" />
     </svg>
   ),
+  enquiries: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+      <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
+      <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
+    </svg>
+  ),
   settings: (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
       <path
@@ -44,6 +51,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
   { label: 'Tickets', to: '/tickets', icon: 'tickets' },
   { label: 'Customers', to: '/customers', icon: 'customers' },
+  { label: 'Enquiries', to: '/enquiries', icon: 'enquiries' },
   { label: 'Settings', to: '/settings', icon: 'settings' },
 ];
 
@@ -78,11 +86,8 @@ function IconRail() {
 
   return (
     <div className="flex h-full w-16 flex-col items-center border-r border-gray-200 bg-white py-4">
-      <Link
-        to="/tickets"
-        className="mb-6 flex size-9 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
-      >
-        Z
+      <Link to="/tickets" className="mb-6" aria-label="ZenithDesk home">
+        <LogoMark className="size-9 drop-shadow-sm" />
       </Link>
 
       <nav className="flex flex-1 flex-col items-center gap-1">
@@ -148,11 +153,8 @@ function MobileSidebarContent() {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-          Z
-        </div>
-        <span className="text-base font-semibold text-gray-900">ZenithDesk</span>
+      <div className="px-5 py-5">
+        <Logo />
       </div>
 
       <div className="px-3">

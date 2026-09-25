@@ -17,4 +17,38 @@ async function sendOtpEmail(to, code) {
   });
 }
 
-module.exports = { sendOtpEmail };
+// Tells an org that its chat widget took down a new enquiry. Plain text only:
+// every field here was typed by a stranger on a public website, and plain text
+// cannot carry markup or a disguised link into the recipient's inbox.
+async function sendEnquiryAlert(to, { orgName, enquiry }) {
+  const lines = [
+    `New enquiry from the chat widget for ${orgName}.`,
+    '',
+    `Name:    ${enquiry.name}`,
+    enquiry.email ? `Email:   ${enquiry.email}` : null,
+    enquiry.phone ? `Phone:   ${enquiry.phone}` : null,
+    enquiry.company ? `Company: ${enquiry.company}` : null,
+    '',
+    'Message:',
+    enquiry.message,
+  ];
+  if (process.env.PORTAL_URL) {
+    lines.push('', `Open it: ${process.env.PORTAL_URL.replace(/\/$/, '')}/enquiries?open=${enquiry.id}`);
+  }
+  const text = lines.filter((line) => line !== null).join('\n');
+
+  if (!resend) {
+    logger.warn(`RESEND_API_KEY not set — logging enquiry alert instead of emailing ${to}:\n${text}`);
+    return;
+  }
+
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL,
+    to,
+    ...(enquiry.email ? { replyTo: enquiry.email } : {}),
+    subject: `New enquiry: ${enquiry.name}${enquiry.company ? ` (${enquiry.company})` : ''}`,
+    text,
+  });
+}
+
+module.exports = { sendOtpEmail, sendEnquiryAlert };

@@ -3,6 +3,7 @@ import { Outlet, useMatch } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import ViewsPanel from './ViewsPanel';
 import SearchBar from './SearchBar';
+import ThemeToggle from './ThemeToggle';
 
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -35,9 +36,10 @@ function Layout() {
             </svg>
           </button>
           <SearchBar />
+          <ThemeToggle />
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+        <main className="mx-auto w-full max-w-[1800px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>

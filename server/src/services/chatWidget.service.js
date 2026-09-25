@@ -34,6 +34,18 @@ const DEFAULT_TOOLS = {
 
 const MAX_DOMAINS = 20;
 
+// Which jobs the bot does. The defaults are what it did before this setting
+// existed, so an org that never opens it sees no change.
+const BOT_PURPOSES = ['enquiry', 'support', 'knowledge', 'status'];
+const DEFAULT_BOT = {
+  purposes: { enquiry: false, support: true, knowledge: true, status: true },
+  companyDescription: '',
+  outOfScopeMessage: '',
+  enquiryAlertEmail: '',
+};
+const BOT_TEXT_LIMITS = { companyDescription: 500, outOfScopeMessage: 300 };
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Each theme field is checked on its own terms rather than by one loose rule,
 // because every one of them lands in CSS or markup on someone else's website.
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -190,6 +202,64 @@ function sanitizeTools(input) {
   return tools;
 }
 
+// Accepts a partial bot object and returns it checked, merged over what is
+// already stored, because the purposes have to be judged as a whole: the bot
+// must be left with at least one thing to do.
+function sanitizeBot(input, current) {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new ApiError(400, 'bot must be an object');
+  }
+
+  const bot = { ...current, purposes: { ...current.purposes } };
+  for (const [field, value] of Object.entries(input)) {
+    if (field === 'purposes') {
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        throw new ApiError(400, 'bot.purposes must be an object');
+      }
+      for (const [purpose, on] of Object.entries(value)) {
+        if (!BOT_PURPOSES.includes(purpose)) {
+          throw new ApiError(400, `Unknown bot purpose: ${purpose}`);
+        }
+        if (typeof on !== 'boolean') {
+          throw new ApiError(400, `bot.purposes.${purpose} must be true or false`);
+        }
+        bot.purposes[purpose] = on;
+      }
+    } else if (field in BOT_TEXT_LIMITS) {
+      if (typeof value !== 'string') {
+        throw new ApiError(400, `bot.${field} must be text`);
+      }
+      const text = value.trim();
+      if (text.length > BOT_TEXT_LIMITS[field]) {
+        throw new ApiError(400, `bot.${field} must be at most ${BOT_TEXT_LIMITS[field]} characters`);
+      }
+      bot[field] = text;
+    } else if (field === 'enquiryAlertEmail') {
+      const text = typeof value === 'string' ? value.trim() : null;
+      if (text === null || (text && (!EMAIL.test(text) || text.length > 255))) {
+        throw new ApiError(400, 'bot.enquiryAlertEmail must be an email address');
+      }
+      bot.enquiryAlertEmail = text.toLowerCase();
+    } else {
+      throw new ApiError(400, `Unknown bot field: ${field}`);
+    }
+  }
+
+  if (!BOT_PURPOSES.some((purpose) => bot.purposes[purpose])) {
+    throw new ApiError(400, 'Turn on at least one thing for the bot to do');
+  }
+  return bot;
+}
+
+function presentBot(stored) {
+  const bot = parseJson(stored, {});
+  return {
+    ...DEFAULT_BOT,
+    ...bot,
+    purposes: { ...DEFAULT_BOT.purposes, ...(bot.purposes || {}) },
+  };
+}
+
 // Stored as bare origins (scheme://host[:port]) because that is exactly what a
 // browser sends in the Origin header, so the chatbot can compare with ===
 // rather than parsing. A bare hostname is taken to mean https.
@@ -234,6 +304,7 @@ function present(row) {
     tools: {
       attachments: { ...DEFAULT_TOOLS.attachments, ...(tools.attachments || {}) },
     },
+    bot: presentBot(row.bot),
   };
 }
 
@@ -251,7 +322,7 @@ async function getSettings(orgId) {
   return present(row);
 }
 
-async function updateSettings(orgId, { theme, tools, allowedDomains }) {
+async function updateSettings(orgId, { theme, tools, allowedDomains, bot }) {
   const db = forOrg(orgId);
   const row = await db.get('chat_widget_settings', {}, 'Chat widget settings not found');
   const updates = {};
@@ -264,6 +335,9 @@ async function updateSettings(orgId, { theme, tools, allowedDomains }) {
   }
   if (allowedDomains !== undefined) {
     updates.allowed_domains = JSON.stringify(sanitizeDomains(allowedDomains));
+  }
+  if (bot !== undefined) {
+    updates.bot = JSON.stringify(sanitizeBot(bot, presentBot(row.bot)));
   }
   if (Object.keys(updates).length === 0) {
     throw new ApiError(400, 'No valid fields to update');
@@ -305,8 +379,20 @@ async function getPublicConfig(publicKey) {
     throw new ApiError(404, 'Unknown widget key');
   }
 
-  const { theme, tools, allowedDomains } = present(row);
-  return { orgId: row.org_id, theme, tools, allowedDomains };
+  // The alert address stays behind: this response is unauthenticated, and the
+  // bot only needs to know what to do, not whom the main app will email.
+  const { theme, tools, allowedDomains, bot } = present(row);
+  const publicBot = { ...bot };
+  delete publicBot.enquiryAlertEmail;
+  return { orgId: row.org_id, theme, tools, allowedDomains, bot: publicBot };
+}
+
+// The bot settings as the main app itself sees them, alert address included.
+async function getBotSettings(orgId) {
+  const row = await forOrg(orgId).get('chat_widget_settings', {}, 'Chat widget settings not found', {
+    columns: 'bot',
+  });
+  return presentBot(row.bot);
 }
 
 // Which org a widget key belongs to, or null. A platform service token acts
@@ -319,6 +405,7 @@ async function findOrgIdByKey(publicKey) {
 module.exports = {
   DEFAULT_THEME,
   DEFAULT_TOOLS,
+  DEFAULT_BOT,
   ATTACHMENT_TYPES,
   MAX_ATTACHMENT_MB,
   seedDefaults,
@@ -326,6 +413,7 @@ module.exports = {
   updateSettings,
   regenerateKey,
   getPublicConfig,
+  getBotSettings,
   findOrgIdByKey,
   normalizeDomain,
 };

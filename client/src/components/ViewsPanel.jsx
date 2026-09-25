@@ -119,7 +119,7 @@ function ViewsPanel() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save current filters'}
           </button>

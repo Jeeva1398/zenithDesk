@@ -46,7 +46,7 @@ function DashboardPage() {
   }, [token, days]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>

@@ -1,5 +1,95 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
   margin: 0;
+}
+
+/*
+ * Dark theme by palette swap. Every utility reads its colour from a theme
+ * variable, so remapping the variables under .dark restyles the whole app
+ * without a dark: class on each element. Greys invert onto the brand's
+ * Midnight/Ink tones; accent 50–200 (tinted backgrounds, borders) become
+ * translucent washes and 700–900 (text on those washes) take the light end.
+ * 500/600 stay put, so the indigo buttons keep their white text.
+ */
+.dark {
+  color-scheme: dark;
+
+  --color-gray-50: #0b0920;
+  --color-gray-100: #1c1940;
+  --color-gray-200: #29264f;
+  --color-gray-300: #3a3666;
+  --color-gray-400: #7c77a6;
+  --color-gray-500: #9a96c0;
+  --color-gray-600: #b6b2d8;
+  --color-gray-700: #cfcce9;
+  --color-gray-800: #e3e1f4;
+  --color-gray-900: #f4f3fb;
+
+  --color-indigo-50: color-mix(in oklab, oklch(58.5% 0.233 277.117) 18%, transparent);
+  --color-indigo-100: color-mix(in oklab, oklch(58.5% 0.233 277.117) 28%, transparent);
+  --color-indigo-200: color-mix(in oklab, oklch(58.5% 0.233 277.117) 40%, transparent);
+  --color-indigo-300: oklch(67.3% 0.182 276.935);
+  --color-indigo-700: oklch(78.5% 0.115 274.713);
+  --color-indigo-800: oklch(87% 0.065 274.039);
+
+  --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 15%, transparent);
+  --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 24%, transparent);
+  --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 35%, transparent);
+  --color-red-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 55%, transparent);
+  --color-red-700: oklch(80.8% 0.114 19.571);
+  --color-red-800: oklch(88.5% 0.062 18.334);
+
+  --color-emerald-50: color-mix(in oklab, oklch(69.6% 0.17 162.48) 15%, transparent);
+  --color-emerald-100: color-mix(in oklab, oklch(69.6% 0.17 162.48) 24%, transparent);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-emerald-800: oklch(90.5% 0.093 164.15);
+
+  --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 15%, transparent);
+  --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 24%, transparent);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-amber-800: oklch(92.4% 0.12 95.746);
+
+  --color-orange-50: color-mix(in oklab, oklch(70.5% 0.213 47.604) 15%, transparent);
+  --color-orange-700: oklch(83.7% 0.128 66.29);
+
+  --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 15%, transparent);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+
+  --color-blue-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 15%, transparent);
+  --color-blue-700: oklch(80.9% 0.105 251.813);
+}
+
+/* White means "surface" as a background but stays white as text. */
+.dark .bg-white,
+.dark .focus\:bg-white:focus {
+  background-color: #14112f;
+}
+.dark .bg-white\/80 {
+  background-color: rgb(20 17 47 / 0.8);
+}
+
+/* 600 is left alone for buttons, but as text it needs the lighter step. */
+.dark .text-indigo-600,
+.dark .hover\:text-indigo-600:hover,
+.dark .focus\:text-indigo-600:focus {
+  color: oklch(78.5% 0.115 274.713);
+}
+.dark .text-red-600 {
+  color: oklch(70.4% 0.191 22.216);
+}
+.dark .text-emerald-600 {
+  color: oklch(76.5% 0.177 163.223);
+}
+
+/* Backdrops dim the page in both themes. */
+.dark .bg-gray-900\/50 {
+  background-color: rgb(0 0 0 / 0.6);
 }

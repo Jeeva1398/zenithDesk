@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { signup as signupRequest } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { inputClass, labelClass, primaryButtonClass } from '../lib/ui';
+import Logo from '../components/Logo';
+import PasswordInput from '../components/PasswordInput';
+import ThemeToggle from '../components/ThemeToggle';
 
 function RegisterPage() {
   const { login } = useAuth();
@@ -11,12 +14,19 @@ function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const data = await signupRequest({
@@ -35,13 +45,11 @@ function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-10">
+      <ThemeToggle className="absolute right-4 top-4" />
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white shadow-sm">
-            Z
-          </div>
-          <span className="text-lg font-semibold text-gray-900">ZenithDesk</span>
+        <div className="mb-8 flex justify-center">
+          <Logo size="lg" stacked />
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -95,15 +103,32 @@ function RegisterPage() {
               <label htmlFor="password" className={labelClass}>
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
-                placeholder="••••••••"
+                placeholder="At least 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className={inputClass}
+                minLength={8}
+                autoComplete="new-password"
               />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className={labelClass}>
+                Confirm password
+              </label>
+              <PasswordInput
+                id="confirmPassword"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                aria-invalid={confirmPassword !== '' && confirmPassword !== password}
+              />
+              {confirmPassword !== '' && confirmPassword !== password && (
+                <p className="mt-1.5 text-xs text-red-600">Passwords do not match.</p>
+              )}
             </div>
 
             {error && (

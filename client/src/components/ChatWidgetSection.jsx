@@ -253,7 +253,7 @@ function ChatWidgetSection() {
       <div className="mb-6">
         <p className={labelClass}>Embed code</p>
         <p className="mb-2 text-xs text-gray-500">Paste this just before &lt;/body&gt; on every page that should show the chat.</p>
-        <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100">
+        <pre className="overflow-x-auto rounded-lg bg-[#0E0B30] p-3 text-xs text-[#E4E2F5] ring-1 ring-white/10">
           <code>{snippet}</code>
         </pre>
         <div className="mt-2 flex gap-2">

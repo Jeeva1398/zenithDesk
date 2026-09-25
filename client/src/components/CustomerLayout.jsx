@@ -1,5 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
+import { LogoMark } from './Logo';
+import ThemeToggle from './ThemeToggle';
 
 function CustomerLayout() {
   const { orgName, logout } = useCustomerAuth();
@@ -15,21 +17,22 @@ function CustomerLayout() {
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-              Z
-            </div>
+            <LogoMark className="size-8" />
             <div>
               <p className="text-sm font-semibold text-gray-900">{orgName || 'Support'}</p>
               <p className="text-xs text-gray-400">Customer portal</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="text-sm font-medium text-gray-500 hover:text-gray-700"
-          >
-            Log out
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-sm font-medium text-gray-500 hover:text-gray-700"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 

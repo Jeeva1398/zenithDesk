@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { requestOtp, resolveOrg, verifyOtp } from '../../api/customerAuth';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { inputClass, labelClass, primaryButtonClass } from '../../lib/ui';
+import Logo from '../../components/Logo';
+import ThemeToggle from '../../components/ThemeToggle';
 
 function CustomerLoginPage() {
   const { login } = useCustomerAuth();
@@ -60,13 +62,11 @@ function CustomerLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4">
+      <ThemeToggle className="absolute right-4 top-4" />
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white shadow-sm">
-            Z
-          </div>
-          <span className="text-lg font-semibold text-gray-900">ZenithDesk</span>
+        <div className="mb-8 flex justify-center">
+          <Logo size="lg" stacked />
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">

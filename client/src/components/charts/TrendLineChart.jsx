@@ -31,6 +31,10 @@ function TrendLineChart({ data, series }) {
   const svgRef = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);
 
+  if (data.length === 0) {
+    return <p className="py-6 text-center text-sm text-gray-400">No data yet</p>;
+  }
+
   const plotWidth = WIDTH - PAD_LEFT - PAD_RIGHT;
   const plotHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
@@ -95,7 +99,7 @@ function TrendLineChart({ data, series }) {
                 x2={WIDTH - PAD_RIGHT}
                 y1={yAt(tick)}
                 y2={yAt(tick)}
-                stroke="#e5e7eb"
+                stroke="currentColor" className="text-gray-200"
                 strokeWidth="1"
               />
               <text x={PAD_LEFT - 8} y={yAt(tick)} textAnchor="end" dominantBaseline="middle" className="fill-gray-400 text-[10px]">
@@ -127,7 +131,7 @@ function TrendLineChart({ data, series }) {
             const showLabel = !endLabelsCollide || si === 0;
             return (
               <g key={s.key}>
-                <circle cx={xAt(data.length - 1)} cy={yAt(last[s.key])} r="4" fill={s.color} stroke="#fff" strokeWidth="2" />
+                <circle cx={xAt(data.length - 1)} cy={yAt(last[s.key])} r="4" fill={s.color} stroke="currentColor" className="text-white dark:text-[#14112f]" strokeWidth="2" />
                 {showLabel && (
                   <text
                     x={xAt(data.length - 1) + 6}
@@ -148,7 +152,7 @@ function TrendLineChart({ data, series }) {
               x2={xAt(hoverIndex)}
               y1={PAD_TOP}
               y2={HEIGHT - PAD_BOTTOM}
-              stroke="#9ca3af"
+              stroke="currentColor" className="text-gray-400"
               strokeWidth="1"
               strokeDasharray="3 3"
             />
@@ -161,7 +165,7 @@ function TrendLineChart({ data, series }) {
                 cy={yAt(hovered[s.key])}
                 r="4"
                 fill={s.color}
-                stroke="#fff"
+                stroke="currentColor" className="text-white dark:text-[#14112f]"
                 strokeWidth="2"
               />
             ))}

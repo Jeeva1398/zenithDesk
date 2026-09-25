@@ -5,6 +5,8 @@ async function getDimOrgId(orgId) {
   return rows[0]?.id || null;
 }
 
+// An org with no warehouse rows yet (e.g. just registered) still gets a full
+// zero-filled trend, so the chart draws an empty baseline instead of nothing.
 function emptyOverview(days) {
   return {
     range: { days },
@@ -14,7 +16,7 @@ function emptyOverview(days) {
       avgFirstResponseHours: null,
       avgResolutionHours: null,
     },
-    trend: [],
+    trend: fillDailySeries([], days),
     byCategory: [],
     byAgent: [],
     byPriority: [],

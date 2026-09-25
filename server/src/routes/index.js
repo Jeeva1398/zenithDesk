@@ -16,6 +16,7 @@ const customerTicketRoutes = require('./customerTicket.routes');
 const analyticsRoutes = require('./analytics.routes');
 const chatWidgetRoutes = require('./chatWidget.routes');
 const knowledgeRoutes = require('./knowledge.routes');
+const enquiryRoutes = require('./enquiry.routes');
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.use('/search', searchRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/chat-widget', chatWidgetRoutes);
 router.use('/knowledge', knowledgeRoutes);
+router.use('/enquiries', enquiryRoutes);
 router.use('/super-admin', superAdminRoutes);
 router.use('/admin', adminRoutes);
 router.use('/customer-auth', customerAuthRoutes);
