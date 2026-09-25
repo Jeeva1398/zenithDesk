@@ -26,7 +26,7 @@ function formatDate(dateStr) {
 
 // Two-series daily trend (tickets created vs. resolved) with a crosshair + shared
 // tooltip. Values live at the line's end (direct label) and in the tooltip; color
-// never carries identity alone — a legend with line-keys is always shown alongside.
+// never carries identity alone - a legend with line-keys is always shown alongside.
 function TrendLineChart({ data, series }) {
   const svgRef = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);

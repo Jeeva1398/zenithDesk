@@ -282,7 +282,7 @@ function TicketsPage() {
                               {tag}
                             </span>
                           ))
-                        : '—'}
+                        : '-'}
                     </div>
                   </td>
                   <td className="px-5 py-3.5">

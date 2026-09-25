@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // Every token in this app is signed with the same JWT_SECRET, so the payload
 // itself is the only thing distinguishing an agent token from a customer or
 // super-admin one. Without an explicit type claim, a token minted for one
-// audience verifies happily against another's middleware — a customer's OTP
+// audience verifies happily against another's middleware - a customer's OTP
 // token would satisfy `authenticate` and inherit org-wide agent access. `typ`
 // is that discriminator, and `verifyToken` refuses to return a payload whose
 // type isn't the one the caller asked for.
@@ -33,7 +33,7 @@ function signToken(payload, options = {}) {
 
 // Returns the payload, or throws a plain Error the caller converts into the
 // 401/403 it wants. Tokens issued before `typ` existed have no type at all and
-// are rejected rather than grandfathered in — failing closed here just costs
+// are rejected rather than grandfathered in - failing closed here just costs
 // everyone one re-login, whereas failing open leaves the escalation path open.
 function verifyToken(token, expectedType) {
   let payload;

@@ -4,7 +4,7 @@ const ApiError = require('../utils/ApiError');
 // The chatbot calls the OTP endpoints server-to-server, so req.ip is the
 // chatbot host for every one of its users and they would share one bucket. It
 // forwards the real caller here instead, honoured only from hosts named in
-// TRUSTED_SERVICE_IPS — from anyone else the header would just be a way to
+// TRUSTED_SERVICE_IPS - from anyone else the header would just be a way to
 // mint a fresh bucket per request.
 const CLIENT_IP_HEADER = 'x-zenithdesk-client-ip';
 
@@ -46,14 +46,14 @@ const common = {
   keyGenerator: endUserIpKey,
 };
 
-// Broad backstop against scripted traffic. Deliberately loose — an agent
+// Broad backstop against scripted traffic. Deliberately loose - an agent
 // working a ticket queue fires a lot of legitimate requests, and the tighter
 // limiters below cover the endpoints that actually matter.
 const generalLimiter = rateLimit({
   ...common,
   windowMs: 15 * 60 * 1000,
   limit: 600,
-  handler: rejectWith('Too many requests — please slow down and try again shortly.'),
+  handler: rejectWith('Too many requests - please slow down and try again shortly.'),
 });
 
 // One rateLimit instance is one bucket, so the credential endpoints get their
@@ -67,17 +67,17 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   skipSuccessfulRequests: true,
-  handler: rejectWith('Too many attempts — please wait a few minutes and try again.'),
+  handler: rejectWith('Too many attempts - please wait a few minutes and try again.'),
 });
 
-// Signup is an abuse surface rather than a guessing one — nobody is brute
+// Signup is an abuse surface rather than a guessing one - nobody is brute
 // forcing it, but one caller shouldn't be able to spray organizations.
 // Failures here are usually validation errors, so they're counted too.
 const signupLimiter = rateLimit({
   ...common,
   windowMs: 60 * 60 * 1000,
   limit: 20,
-  handler: rejectWith('Too many signups from this address — please try again later.'),
+  handler: rejectWith('Too many signups from this address - please try again later.'),
 });
 
 // resolve-org tells the caller whether an address has an account, so it is an
@@ -87,7 +87,7 @@ const lookupLimiter = rateLimit({
   ...common,
   windowMs: 15 * 60 * 1000,
   limit: 20,
-  handler: rejectWith('Too many lookups — please wait a few minutes and try again.'),
+  handler: rejectWith('Too many lookups - please wait a few minutes and try again.'),
 });
 
 // Sending an OTP costs a real email (and real money) and is reachable without
@@ -98,7 +98,7 @@ const otpRequestLimiter = rateLimit({
   ...common,
   windowMs: 15 * 60 * 1000,
   limit: 5,
-  handler: rejectWith('Too many verification codes requested — please wait before trying again.'),
+  handler: rejectWith('Too many verification codes requested - please wait before trying again.'),
 });
 
 // Verification is the brute-force surface: 6 digits is a million combinations,
@@ -108,7 +108,7 @@ const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 15,
   skipSuccessfulRequests: true,
-  handler: rejectWith('Too many verification attempts — please wait before trying again.'),
+  handler: rejectWith('Too many verification attempts - please wait before trying again.'),
 });
 
 // The public widget-config lookup. Keys are 128 random bits, so guessing is
@@ -119,7 +119,7 @@ const widgetConfigLimiter = rateLimit({
   ...common,
   windowMs: 15 * 60 * 1000,
   limit: 120,
-  handler: rejectWith('Too many widget lookups — please try again shortly.'),
+  handler: rejectWith('Too many widget lookups - please try again shortly.'),
 });
 
 module.exports = {

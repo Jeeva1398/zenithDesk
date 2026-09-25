@@ -14,9 +14,9 @@ The full architecture, schema and phased build plan are kept in
 
 ## Project structure
 
-- `server/` — Node.js + Express REST API, MySQL via `mysql2`
-- `client/` — React (Vite) agent dashboard
-- `e2e/` — Playwright end-to-end and API tests
+- `server/` - Node.js + Express REST API, MySQL via `mysql2`
+- `client/` - React (Vite) agent dashboard
+- `e2e/` - Playwright end-to-end and API tests
 
 ## Setup
 

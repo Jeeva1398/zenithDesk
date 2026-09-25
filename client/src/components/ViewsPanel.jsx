@@ -27,7 +27,7 @@ function ViewsPanel() {
       const result = await listViews(token);
       setViews(result.views);
     } catch {
-      // Non-critical — quick views still work if saved views fail to load.
+      // Non-critical - quick views still work if saved views fail to load.
     }
   };
 
@@ -66,7 +66,7 @@ function ViewsPanel() {
       await deleteView(token, id);
       await loadViews();
     } catch {
-      // Non-critical — leave the stale entry, user can retry.
+      // Non-critical - leave the stale entry, user can retry.
     }
   };
 

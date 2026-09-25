@@ -12,7 +12,7 @@ function StatCard({ label, value, tone = 'gray' }) {
         <span className={`size-2 rounded-full ${TONE_DOT_STYLES[tone]}`} aria-hidden="true" />
         {label}
       </div>
-      <p className="mt-2 text-2xl font-semibold text-gray-900">{value === null ? '—' : value}</p>
+      <p className="mt-2 text-2xl font-semibold text-gray-900">{value === null ? '-' : value}</p>
     </div>
   );
 }

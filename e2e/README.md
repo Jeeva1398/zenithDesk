@@ -1,6 +1,6 @@
 # ZenithDesk E2E suite
 
-Playwright tests for the main app — API-level checks and browser flows.
+Playwright tests for the main app - API-level checks and browser flows.
 
 ## Running
 
@@ -17,7 +17,7 @@ npm run report      # open the HTML report from the last CI-style run
 ## What it assumes
 
 Database credentials come from the environment, falling back to `server/.env`
-(`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`) — which is how the same suite
+(`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`) - which is how the same suite
 runs locally and in CI, where there is no `.env` file. Nothing else is taken
 from your environment: ports, the JWT secret and the schema name are all fixed
 in `test-env.js`.

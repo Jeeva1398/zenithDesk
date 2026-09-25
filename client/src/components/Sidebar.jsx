@@ -69,7 +69,7 @@ function isItemActive(item, pathname, ticketsActive, customersActive) {
   return item.to !== null && pathname === item.to;
 }
 
-// Icon-only rail — desktop.
+// Icon-only rail - desktop.
 function IconRail() {
   const ticketsActive = useTicketsActive();
   const customersActive = useCustomersActive();
@@ -136,7 +136,7 @@ function IconRail() {
   );
 }
 
-// Full labeled nav + views — mobile drawer.
+// Full labeled nav + views - mobile drawer.
 function MobileSidebarContent() {
   const ticketsActive = useTicketsActive();
   const customersActive = useCustomersActive();

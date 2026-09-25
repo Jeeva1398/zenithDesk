@@ -27,7 +27,7 @@ function toNumber(value) {
   return value === null || value === undefined ? null : Number(value);
 }
 
-// The query only returns days with activity — backfill the gaps so the trend
+// The query only returns days with activity - backfill the gaps so the trend
 // is a continuous daily series (a line chart connecting sparse dates would
 // visually lie about which days had zero tickets vs. no data at all).
 function fillDailySeries(rows, days) {

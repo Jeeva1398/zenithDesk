@@ -24,7 +24,7 @@ async function listAgents() {
 }
 
 // The one intentional exception to "always filter by org_id" (see
-// zenithdesk-architecture.md §4) — this is a platform-wide view across all
+// zenithdesk-architecture.md §4) - this is a platform-wide view across all
 // tenants, gated by authenticateSuperAdmin, not an org-scoped route.
 async function listTickets(filters) {
   const { page, limit, offset } = paginationParams(filters);

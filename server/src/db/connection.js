@@ -13,7 +13,7 @@ const pool = mysql.createPool({
 });
 
 // mysql2/promise's pool is a thin wrapper (PromisePool) around the
-// underlying callback-based Pool — internal connection errors (e.g. MySQL
+// underlying callback-based Pool - internal connection errors (e.g. MySQL
 // closing an idle connection) are emitted on `pool.pool`, NOT on the
 // wrapper itself, so the listener must be attached there. Without it, an
 // unhandled 'error' event crashes the whole Node process with no output.

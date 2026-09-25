@@ -279,7 +279,7 @@ function EnquiriesPage() {
         <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center text-sm text-gray-500">
           {totalAll === 0 && !q ? (
             <>
-              No enquiries yet. They arrive here when your chat widget takes enquiries —{' '}
+              No enquiries yet. They arrive here when your chat widget takes enquiries -{' '}
               <Link to="/settings?tab=chatbot" className="font-medium text-indigo-600 hover:text-indigo-700">
                 set that up in Settings
               </Link>
@@ -326,7 +326,7 @@ function EnquiriesPage() {
                       {enquiry.name}
                     </button>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600">{enquiry.company || '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{enquiry.company || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-600">
                     <div className="flex flex-col">
                       {enquiry.email && <span>{enquiry.email}</span>}

@@ -103,7 +103,7 @@ function CustomersPage() {
                   <td className="px-5 py-3.5 text-gray-600">{customer.email}</td>
                   <td className="px-5 py-3.5 text-gray-600">{customer.ticket_count}</td>
                   <td className="px-5 py-3.5 text-gray-500">
-                    {customer.last_ticket_at ? new Date(customer.last_ticket_at).toLocaleDateString() : '—'}
+                    {customer.last_ticket_at ? new Date(customer.last_ticket_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-5 py-3.5 text-gray-500">
                     {new Date(customer.created_at).toLocaleDateString()}

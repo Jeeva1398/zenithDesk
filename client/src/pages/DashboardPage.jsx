@@ -76,12 +76,12 @@ function DashboardPage() {
           <StatCard label="Tickets resolved" value={overview ? overview.totals.ticketsResolved : null} tone="emerald" />
           <StatCard
             label="Avg first response"
-            value={overview ? formatHours(overview.totals.avgFirstResponseHours) ?? '—' : null}
+            value={overview ? formatHours(overview.totals.avgFirstResponseHours) ?? '-' : null}
             tone="amber"
           />
           <StatCard
             label="Avg resolution time"
-            value={overview ? formatHours(overview.totals.avgResolutionHours) ?? '—' : null}
+            value={overview ? formatHours(overview.totals.avgResolutionHours) ?? '-' : null}
             tone="gray"
           />
         </div>

@@ -30,7 +30,7 @@ const ORG_SCOPED_TABLES = new Set([
 const UNSCOPED_MARKER = /\/\*\s*unscoped:/i;
 
 // Matches the table name after the keywords that introduce one. Deliberately
-// broad rather than a real SQL parser — the point is to catch a forgotten
+// broad rather than a real SQL parser - the point is to catch a forgotten
 // predicate in code review's blind spot, not to be a query planner.
 const TABLE_REFERENCE = /\b(?:from|join|into|update|table)\s+`?([a-z_][a-z0-9_]*)`?/gi;
 
@@ -52,8 +52,8 @@ function scopedTablesIn(text) {
 }
 
 // Throws on a statement that touches an org-scoped table without naming
-// org_id anywhere. It cannot prove the predicate is the right one — a
-// subquery mentioning org_id satisfies it — so it is a backstop under the
+// org_id anywhere. It cannot prove the predicate is the right one - a
+// subquery mentioning org_id satisfies it - so it is a backstop under the
 // scope helper, not a substitute for it.
 function assertTenantScoped(sql) {
   const text = statementText(sql);

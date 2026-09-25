@@ -261,3 +261,48 @@ test.describe('ticket attachments', () => {
     expect(attach.status()).toBe(404);
   });
 });
+
+test.describe('chat widget home screen', () => {
+  test('has defaults an older org reads back without saving anything', async ({ request }) => {
+    const org = await createOrg(request);
+    const { theme } = await settings(request, org.token);
+    expect(theme.homeTitle).toBe('How can we help?');
+    expect(theme.topics).toEqual([]);
+    expect(theme.showPoweredBy).toBe(true);
+    expect(theme.privacyNotice).toContain('passwords');
+  });
+
+  test('saves topics, the notice and the badge, and serves them publicly', async ({ request }) => {
+    const org = await createOrg(request);
+    const res = await patch(request, org.token, {
+      theme: {
+        homeTitle: 'What would you like to know?',
+        topics: [{ title: '  Shipping times ', subtitle: 'Where is my order' }, { title: 'Returns' }],
+        privacyNotice: '',
+        showPoweredBy: false,
+      },
+    });
+    expect(res.status()).toBe(200);
+    const saved = await res.json();
+    expect(saved.theme.topics).toEqual([
+      { title: 'Shipping times', subtitle: 'Where is my order' },
+      { title: 'Returns', subtitle: '' },
+    ]);
+
+    const pub = await (await request.get(`${API_URL}/chat-widget/public/${saved.publicKey}`)).json();
+    expect(pub.theme.homeTitle).toBe('What would you like to know?');
+    expect(pub.theme.privacyNotice).toBe('');
+    expect(pub.theme.showPoweredBy).toBe(false);
+  });
+
+  test('refuses bad topics and a non-boolean badge', async ({ request }) => {
+    const org = await createOrg(request);
+    const seven = Array.from({ length: 7 }, (_, i) => ({ title: `Topic ${i}` }));
+    expect((await patch(request, org.token, { theme: { topics: seven } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { topics: [{ title: '' }] } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { topics: [{ title: 'x'.repeat(41) }] } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { topics: 'Shipping' } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { showPoweredBy: 'yes' } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { homeTitle: ' ' } })).status()).toBe(400);
+  });
+});

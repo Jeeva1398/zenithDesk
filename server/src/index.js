@@ -20,7 +20,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Rate limiting keys on req.ip, which behind a proxy is the proxy's address
-// unless Express is told how many hops to trust — every caller would then
+// unless Express is told how many hops to trust - every caller would then
 // share one bucket. Trusting blindly is worse though: a spoofed
 // X-Forwarded-For would hand each request its own bucket and void the limits.
 // So the hop count is explicit config, defaulting to "no proxy".
@@ -32,7 +32,7 @@ const corsOrigins = getCorsOrigins();
 app.use(
   cors({
     // A missing Origin header is a non-browser caller (curl, the chatbot's
-    // server-side ticket client, health checks) — those aren't what CORS
+    // server-side ticket client, health checks) - those aren't what CORS
     // protects against, so they pass through.
     origin(origin, callback) {
       if (!origin || corsOrigins.includes(origin)) {
@@ -60,17 +60,17 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Without these, an unhandled error/rejection crashes the process with no
-// logged cause (nodemon just reports "app crashed"). Log first, then exit —
+// logged cause (nodemon just reports "app crashed"). Log first, then exit -
 // process state after an uncaught error can't be trusted, but at least the
 // real cause is now visible.
 process.on('uncaughtException', (err) => {
-  logger.error('Uncaught exception — process will exit:');
+  logger.error('Uncaught exception - process will exit:');
   logger.error(err);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
-  logger.error('Unhandled promise rejection — process will exit:');
+  logger.error('Unhandled promise rejection - process will exit:');
   logger.error(reason instanceof Error ? reason : new Error(String(reason)));
   process.exit(1);
 });
@@ -92,7 +92,7 @@ const server = app.listen(port, async () => {
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    logger.error(`Port ${port} is already in use — is another instance of the server running?`);
+    logger.error(`Port ${port} is already in use - is another instance of the server running?`);
   } else {
     logger.error(err);
   }

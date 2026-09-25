@@ -49,7 +49,7 @@ function SearchPage() {
         {query && (
           <p className="mt-1 text-sm text-gray-500">
             {loading ? 'Searching' : 'Results'} for <span className="font-medium">{query}</span>
-            {results && !loading && ` — ${results.total} match${results.total === 1 ? '' : 'es'}`}
+            {results && !loading && ` - ${results.total} match${results.total === 1 ? '' : 'es'}`}
           </p>
         )}
       </div>

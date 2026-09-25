@@ -77,7 +77,7 @@ test.describe('rate limiting', () => {
 
   test('requests with no client-IP header fall back to one shared bucket', async ({ request }) => {
     // The other half of endUserIpKey: without a declared end user, everything
-    // from one address shares a bucket — which is what keeps the header from
+    // from one address shares a bucket - which is what keeps the header from
     // being a way to opt out of limiting. (An untrusted source is refused the
     // header entirely; that branch can't be exercised from here, since the
     // suite necessarily calls from the trusted loopback address.)

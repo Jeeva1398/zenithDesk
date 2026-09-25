@@ -20,7 +20,17 @@ const DEFAULT_THEME = {
   placeholder: 'Describe your issue...',
   greeting: '',
   logoUrl: '',
+  // The widget's home screen: what it opens on before a conversation starts.
+  homeTitle: 'How can we help?',
+  homeSubtitle: '',
+  // Up to six "Explore" cards; tapping one asks its title. Empty means the
+  // widget shows the bot's own opening choices instead.
+  topics: [],
+  privacyNotice: 'Please do not share passwords or payment details in this chat.',
+  showPoweredBy: true,
 };
+
+const MAX_TOPICS = 6;
 
 // Every type the server is able to verify by its leading bytes. An org picks a
 // subset; it can never widen this list, because a file is only accepted once
@@ -65,7 +75,23 @@ const THEME_RULES = {
   placeholder: { type: 'text', max: 60, required: true },
   greeting: { type: 'text', max: 200 },
   logoUrl: { type: 'url', max: 500 },
+  homeTitle: { type: 'text', max: 80, required: true },
+  homeSubtitle: { type: 'text', max: 140 },
+  topics: { type: 'topics' },
+  privacyNotice: { type: 'text', max: 200 },
+  showPoweredBy: { type: 'bool' },
 };
+
+function cleanTopicText(value, field, max, required) {
+  if (value === undefined || value === null) value = '';
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `theme.topics ${field} must be text`);
+  }
+  const text = value.trim();
+  if (required && !text) throw new ApiError(400, `Every topic needs a ${field}`);
+  if (text.length > max) throw new ApiError(400, `A topic ${field} must be at most ${max} characters`);
+  return text;
+}
 
 function generatePublicKey() {
   return `zdw_${crypto.randomBytes(16).toString('hex')}`;
@@ -138,6 +164,25 @@ function validateThemeField(field, value) {
         throw new ApiError(400, `theme.${field} must be an https URL of at most ${rule.max} characters`);
       }
       return url.toString();
+    }
+    case 'bool':
+      if (typeof value !== 'boolean') {
+        throw new ApiError(400, `theme.${field} must be true or false`);
+      }
+      return value;
+    case 'topics': {
+      if (!Array.isArray(value) || value.length > MAX_TOPICS) {
+        throw new ApiError(400, `theme.topics must be a list of at most ${MAX_TOPICS} topics`);
+      }
+      return value.map((topic) => {
+        if (typeof topic !== 'object' || topic === null || Array.isArray(topic)) {
+          throw new ApiError(400, 'Each topic must have a title');
+        }
+        return {
+          title: cleanTopicText(topic.title, 'title', 40, true),
+          subtitle: cleanTopicText(topic.subtitle, 'subtitle', 60, false),
+        };
+      });
     }
     default:
       throw new Error(`Unhandled theme rule ${rule.type}`);

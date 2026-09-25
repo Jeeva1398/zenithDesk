@@ -5,7 +5,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 async function sendOtpEmail(to, code) {
   if (!resend) {
-    logger.warn(`RESEND_API_KEY not set — logging OTP instead of emailing ${to}: ${code}`);
+    logger.warn(`RESEND_API_KEY not set - logging OTP instead of emailing ${to}: ${code}`);
     return;
   }
 
@@ -38,7 +38,7 @@ async function sendEnquiryAlert(to, { orgName, enquiry }) {
   const text = lines.filter((line) => line !== null).join('\n');
 
   if (!resend) {
-    logger.warn(`RESEND_API_KEY not set — logging enquiry alert instead of emailing ${to}:\n${text}`);
+    logger.warn(`RESEND_API_KEY not set - logging enquiry alert instead of emailing ${to}:\n${text}`);
     return;
   }
 

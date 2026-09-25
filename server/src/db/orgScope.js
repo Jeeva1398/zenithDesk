@@ -17,7 +17,7 @@ function quote(name) {
 function scopedTable(table) {
   if (!ORG_SCOPED_TABLES.has(table)) {
     throw new Error(
-      `${table} is not an org-scoped table — query it through the pool directly, ` +
+      `${table} is not an org-scoped table - query it through the pool directly, ` +
         'marking the statement /* unscoped: <reason> */.',
     );
   }
@@ -106,7 +106,7 @@ function forOrg(orgId) {
 
   // Returns the number of rows matched. Passing `notFound` turns "matched
   // nothing" into a 404, which is what every caller that targets a single row
-  // wants — an id that isn't in this org is indistinguishable from one that
+  // wants - an id that isn't in this org is indistinguishable from one that
   // doesn't exist, and should stay that way.
   async function update(table, where, data, notFound) {
     const assignments = Object.keys(data).map((column) => `${quote(column)} = ?`);

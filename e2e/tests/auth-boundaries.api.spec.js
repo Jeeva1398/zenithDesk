@@ -16,7 +16,7 @@ test.describe('token audience separation', () => {
 
     // Establishes that the 401 below is the audience check doing its job and
     // not an incidentally broken token: the signature is valid, so the
-    // pre-fix middleware — which only called jwt.verify — would have accepted
+    // pre-fix middleware - which only called jwt.verify - would have accepted
     // this and handed back an agent context scoped to the customer's org.
     const payload = jwt.verify(customer.token, JWT_SECRET);
     expect(payload.orgId).toBeTruthy();

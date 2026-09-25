@@ -5,6 +5,7 @@ import {
   updateChatWidgetSettings,
 } from '../api/chatWidget';
 import { useAuth } from '../context/AuthContext';
+import ChatWidgetPreview from './ChatWidgetPreview';
 import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
 
 // Where the chatbot server serves the built widget bundle. It is also how the
@@ -35,14 +36,6 @@ const FONTS = [
   ['rounded', 'Rounded'],
 ];
 
-// Mirrors the widget's own stacks so the preview is what a visitor will see.
-const FONT_STACKS = {
-  system: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-  serif: "Georgia, 'Times New Roman', serif",
-  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-  rounded: "ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif",
-};
-
 const ATTACHMENT_TYPES = [
   ['png', 'PNG'],
   ['jpg', 'JPG'],
@@ -57,69 +50,6 @@ function toDraft(settings) {
     attachments: { ...settings.tools.attachments },
     domains: settings.allowedDomains.join('\n'),
   };
-}
-
-function WidgetPreview({ theme }) {
-  const side = theme.position === 'left' ? 'items-start' : 'items-end';
-  const bubble = `${theme.bubbleRadius}px`;
-
-  return (
-    <div
-      className={`flex flex-col gap-3 rounded-xl bg-gray-100 p-4 ${side}`}
-      style={{ fontFamily: FONT_STACKS[theme.fontFamily] }}
-    >
-      <div
-        className="w-full max-w-[300px] overflow-hidden shadow-lg"
-        style={{ borderRadius: `${theme.cornerRadius}px`, background: theme.panelBackground }}
-      >
-        <div
-          className="flex items-center gap-2 px-4 py-3"
-          style={{ background: theme.primaryColor, color: theme.primaryTextColor }}
-        >
-          {theme.logoUrl && (
-            <img src={theme.logoUrl} alt="" className="size-7 rounded-full bg-white object-cover" />
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{theme.title || 'Support'}</p>
-            {theme.subtitle && <p className="truncate text-xs opacity-80">{theme.subtitle}</p>}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 p-3 text-[13px]">
-          <div className="flex">
-            <span
-              className="max-w-[80%] px-3 py-2"
-              style={{ background: theme.botBubbleColor, color: theme.botTextColor, borderRadius: bubble }}
-            >
-              {theme.greeting || 'Hi! Tell me what is going on and I will get a ticket started.'}
-            </span>
-          </div>
-          <div className="flex justify-end">
-            <span
-              className="max-w-[80%] px-3 py-2"
-              style={{ background: theme.primaryColor, color: theme.primaryTextColor, borderRadius: bubble }}
-            >
-              My invoice is wrong
-            </span>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 p-2.5">
-          <div className="rounded-full border border-gray-300 px-3 py-1.5 text-xs text-gray-400">
-            {theme.placeholder}
-          </div>
-        </div>
-      </div>
-      <span
-        className="flex size-12 items-center justify-center overflow-hidden rounded-full text-xl shadow-md"
-        style={{ background: theme.primaryColor, color: theme.primaryTextColor }}
-      >
-        {theme.launcherIcon === 'logo' && theme.logoUrl ? (
-          <img src={theme.logoUrl} alt="" className="size-full object-cover" />
-        ) : (
-          '💬'
-        )}
-      </span>
-    </div>
-  );
 }
 
 function ChatWidgetSection() {
@@ -147,6 +77,25 @@ function ChatWidgetSection() {
 
   const setTheme = (field, value) =>
     setDraft((current) => ({ ...current, theme: { ...current.theme, [field]: value } }));
+
+  const setTopic = (index, field, value) =>
+    setDraft((current) => ({
+      ...current,
+      theme: {
+        ...current.theme,
+        topics: current.theme.topics.map((t, i) => (i === index ? { ...t, [field]: value } : t)),
+      },
+    }));
+  const addTopic = () =>
+    setDraft((current) => ({
+      ...current,
+      theme: { ...current.theme, topics: [...current.theme.topics, { title: '', subtitle: '' }] },
+    }));
+  const removeTopic = (index) =>
+    setDraft((current) => ({
+      ...current,
+      theme: { ...current.theme, topics: current.theme.topics.filter((_, i) => i !== index) },
+    }));
 
   const setAttachments = (field, value) =>
     setDraft((current) => ({ ...current, attachments: { ...current.attachments, [field]: value } }));
@@ -423,6 +372,94 @@ function ChatWidgetSection() {
             </div>
           </fieldset>
 
+          <fieldset disabled={disabled} className="flex flex-col gap-4">
+            <legend className="mb-2 text-sm font-semibold text-gray-900">Home screen</legend>
+            <div>
+              <label className={labelClass}>Heading</label>
+              <input
+                value={theme.homeTitle}
+                maxLength={80}
+                onChange={(e) => setTheme('homeTitle', e.target.value)}
+                placeholder="How can we help?"
+                className={inputClass}
+                required
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Line under the heading (optional)</label>
+              <input
+                value={theme.homeSubtitle}
+                maxLength={140}
+                onChange={(e) => setTheme('homeSubtitle', e.target.value)}
+                placeholder="Ask us anything about our products and orders."
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <p className={labelClass}>Explore topics</p>
+              <p className="mb-2 text-xs text-gray-500">
+                Up to 6 cards on the home screen; tapping one asks its title. Leave empty to show the bot&apos;s own
+                opening choices.
+              </p>
+              <div className="flex flex-col gap-2">
+                {theme.topics.map((topic, index) => (
+                  <div key={index} className="flex flex-wrap gap-2 sm:flex-nowrap">
+                    <input
+                      value={topic.title}
+                      maxLength={40}
+                      onChange={(e) => setTopic(index, 'title', e.target.value)}
+                      placeholder="Title, e.g. Shipping times"
+                      aria-label={`Topic ${index + 1} title`}
+                      className={inputClass}
+                      required
+                    />
+                    <input
+                      value={topic.subtitle}
+                      maxLength={60}
+                      onChange={(e) => setTopic(index, 'subtitle', e.target.value)}
+                      placeholder="Short hint (optional)"
+                      aria-label={`Topic ${index + 1} hint`}
+                      className={inputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeTopic(index)}
+                      className={secondaryButtonClass}
+                      aria-label={`Remove topic ${index + 1}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {theme.topics.length < 6 && (
+                <button type="button" onClick={addTopic} className={`${secondaryButtonClass} mt-2`}>
+                  Add topic
+                </button>
+              )}
+            </div>
+            <div>
+              <label className={labelClass}>Privacy notice (optional)</label>
+              <input
+                value={theme.privacyNotice}
+                maxLength={200}
+                onChange={(e) => setTheme('privacyNotice', e.target.value)}
+                placeholder="Leave empty to show none"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-gray-500">Shown above the message box until the visitor dismisses it.</p>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={theme.showPoweredBy}
+                onChange={(e) => setTheme('showPoweredBy', e.target.checked)}
+                className="size-4 accent-indigo-600"
+              />
+              Show &quot;Powered by ZenithDesk&quot;
+            </label>
+          </fieldset>
+
           <fieldset disabled={disabled} className="flex flex-col gap-3">
             <legend className="mb-2 text-sm font-semibold text-gray-900">Attachments</legend>
             <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -488,7 +525,7 @@ function ChatWidgetSection() {
 
         <div className="lg:sticky lg:top-6 lg:self-start">
           <p className={labelClass}>Preview</p>
-          <WidgetPreview theme={theme} />
+          <ChatWidgetPreview theme={theme} />
         </div>
       </form>
     </div>

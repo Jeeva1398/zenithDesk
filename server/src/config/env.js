@@ -1,6 +1,6 @@
 const MIN_SECRET_LENGTH = 32;
 
-// A missing JWT_SECRET doesn't fail loudly — `jwt.sign` throws per-request
+// A missing JWT_SECRET doesn't fail loudly - `jwt.sign` throws per-request
 // while the process still reports healthy, and a short one signs tokens that
 // are brute-forceable offline. Both are worth refusing to boot over, so this
 // runs before the server starts listening rather than on first request.
@@ -12,7 +12,7 @@ function validateEnv() {
     errors.push('JWT_SECRET is required');
   } else if (secret.length < MIN_SECRET_LENGTH) {
     errors.push(
-      `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (got ${secret.length}) — generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`,
+      `JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters (got ${secret.length}) - generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`,
     );
   }
 

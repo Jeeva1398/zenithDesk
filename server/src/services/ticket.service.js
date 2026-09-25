@@ -22,7 +22,7 @@ async function findOrCreateTag(db, name) {
   return db.insert('tags', { name });
 }
 
-// ticket_tags has no org_id of its own — a row is reachable only through a
+// ticket_tags has no org_id of its own - a row is reachable only through a
 // ticket, so the scoping comes from the caller having already proved the
 // ticket belongs to this org.
 async function syncTicketTags(db, ticketId, tagNames) {

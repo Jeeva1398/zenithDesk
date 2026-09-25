@@ -40,7 +40,7 @@ module.exports = defineConfig({
   ],
 
   // Only the client is managed here. The API is started in globalSetup
-  // instead, because webServer launches before globalSetup — i.e. before the
+  // instead, because webServer launches before globalSetup - i.e. before the
   // test database it needs has been created.
   webServer: {
     command: `npx vite --port ${CLIENT_PORT} --strictPort`,

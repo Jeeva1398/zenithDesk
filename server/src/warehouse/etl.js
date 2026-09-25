@@ -27,14 +27,14 @@ async function loadMap(table, keyCol, valCol) {
 }
 
 // dim_category's unique constraint is case-insensitive (MySQL's default collation),
-// but a JS Map lookup isn't — normalize both sides so 'billing' and 'Billing' resolve
+// but a JS Map lookup isn't - normalize both sides so 'billing' and 'Billing' resolve
 // to the same dimension row.
 async function loadCategoryMap() {
   const [rows] = await warehousePool.query('SELECT category, id FROM dim_category');
   return new Map(rows.map((row) => [row.category.toLowerCase(), row.id]));
 }
 
-// SCD Type 1 — dimensions are small and always overwritten with the latest source values.
+// SCD Type 1 - dimensions are small and always overwritten with the latest source values.
 async function refreshDimensions() {
   const [orgs] = await oltpPool.query('SELECT id, name FROM organizations');
   for (const org of orgs) {
@@ -91,7 +91,7 @@ async function findAffectedPartitions(watermark) {
 }
 
 // Recomputes one (org, day) partition from scratch rather than incrementing
-// existing rows — keeps averages correct without tracking running sums.
+// existing rows - keeps averages correct without tracking running sums.
 async function fetchPartitionRollup(orgId, dateKey) {
   const [rows] = await oltpPool.query(
     `SELECT

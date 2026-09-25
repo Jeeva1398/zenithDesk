@@ -26,7 +26,7 @@ const JWT_SECRET = 'e2e-test-secret-value-not-used-anywhere-else-0123456789';
 // The API rate-limits OTP requests per IP, so without this every test in the
 // suite would share one five-request bucket. Trusting 127.0.0.1 lets each test
 // declare its own synthetic end-user IP via X-ZenithDesk-Client-IP and get its
-// own bucket — the same mechanism the chatbot uses in production.
+// own bucket - the same mechanism the chatbot uses in production.
 const TRUSTED_SERVICE_IPS = '127.0.0.1,::1';
 
 function serverEnv(dbName = TEST_DB_NAME) {

@@ -103,7 +103,7 @@ function CustomerTicketDetailPage() {
 
         {ticket.comments.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
-            No replies yet — our team will get back to you soon.
+            No replies yet - our team will get back to you soon.
           </p>
         ) : (
           <div className="flex flex-col gap-3">

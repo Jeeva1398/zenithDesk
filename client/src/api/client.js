@@ -7,7 +7,7 @@ export class ApiClientError extends Error {
   }
 }
 
-// A token can stop being valid mid-session — it expires, or the server starts
+// A token can stop being valid mid-session - it expires, or the server starts
 // rejecting the shape it was issued in. Without a global hook, each page just
 // renders its own error while the app still believes someone is signed in,
 // which reads as "the app is broken" rather than "you were signed out".
@@ -69,7 +69,7 @@ async function request(path, { method = 'GET', body, token, retried = false, res
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    // Only for calls that actually presented a token — a 401 from a login
+    // Only for calls that actually presented a token - a 401 from a login
     // attempt is a wrong password, not an expired session.
     if (res.status === 401 && token) {
       // Try once to renew and replay. Only the original attempt may do this:

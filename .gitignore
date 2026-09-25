@@ -9,7 +9,7 @@ e2e/.tmp/
 e2e/test-results/
 e2e/playwright-report/
 
-# Bug-hunt harness — local tooling, credentials and run artefacts.
+# Bug-hunt harness - local tooling, credentials and run artefacts.
 # Not part of the application; un-ignore if you ever want to share it.
 .bughunt/
 .claude/

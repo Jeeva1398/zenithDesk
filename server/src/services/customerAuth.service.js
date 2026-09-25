@@ -17,7 +17,7 @@ function generateOtpCode() {
 }
 
 // This is what establishes which org the caller belongs to, so it is the one
-// customer query that cannot be scoped by one — there is no org yet.
+// customer query that cannot be scoped by one - there is no org yet.
 async function resolveOrgForEmail(email) {
   const [rows] = await pool.query(
     `/* unscoped: resolves which org an address belongs to, so it precedes scoping */
@@ -43,7 +43,7 @@ async function requestOtp(orgId, email) {
     [email, REQUEST_RATE_WINDOW_MINUTES],
   );
   if (recent[0].count >= REQUEST_RATE_LIMIT) {
-    throw new ApiError(429, 'Too many verification requests — please try again later');
+    throw new ApiError(429, 'Too many verification requests - please try again later');
   }
 
   const code = generateOtpCode();
@@ -77,7 +77,7 @@ async function verifyOtp(orgId, email, code) {
     throw new ApiError(401, 'Invalid or expired code');
   }
   if (otp.attempts >= MAX_VERIFY_ATTEMPTS) {
-    throw new ApiError(429, 'Too many attempts — please request a new code');
+    throw new ApiError(429, 'Too many attempts - please request a new code');
   }
 
   const valid = await bcrypt.compare(code, otp.otp_code_hash);

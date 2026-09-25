@@ -26,7 +26,7 @@ function validateActions(actions) {
     throw new ApiError(400, 'actions.comment must be a string');
   }
   if (typeof comment === 'string' && comment.trim() === '') {
-    throw new ApiError(400, 'actions.comment cannot be blank — omit it instead');
+    throw new ApiError(400, 'actions.comment cannot be blank - omit it instead');
   }
 
   const cleaned = {};

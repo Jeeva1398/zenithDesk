@@ -48,7 +48,7 @@ test.describe('agent dashboard', () => {
     await expect(page).toHaveURL(new RegExp(`/tickets/${ticket.id}$`));
     await expect(page.getByText(ticket.description)).toBeVisible();
 
-    const reply = 'Thanks for reporting this — taking a look now.';
+    const reply = 'Thanks for reporting this - taking a look now.';
     await page.getByPlaceholder('Add a reply…').fill(reply);
     await page.getByRole('button', { name: 'Post reply' }).click();
 

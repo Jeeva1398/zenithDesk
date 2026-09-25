@@ -8,7 +8,7 @@ const PRIORITY_COLORS = {
   urgent: '#ef4444',
 };
 
-// Single stacked segment bar — reuses this app's existing priority color mapping
+// Single stacked segment bar - reuses this app's existing priority color mapping
 // (Badge.jsx) rather than a fresh categorical palette, since priority already
 // carries a fixed meaning everywhere else in the UI. A legend keeps identity off
 // color alone, and each segment carries its own hover tooltip.

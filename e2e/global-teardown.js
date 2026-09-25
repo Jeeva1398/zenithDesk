@@ -15,7 +15,7 @@ module.exports = async () => {
   try {
     process.kill(pid);
   } catch (err) {
-    // Already gone (crashed, or killed by hand mid-run) — nothing to do.
+    // Already gone (crashed, or killed by hand mid-run) - nothing to do.
     if (err.code !== 'ESRCH') throw err;
   }
 };
