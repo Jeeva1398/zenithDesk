@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZenithDesk - Help desk and AI chat for every support team</title>
+    <meta
+      name="description"
+      content="ZenithDesk is a help desk with a built-in AI chat widget: it answers from your knowledge base, raises tickets, takes sales enquiries, and gives your team one inbox with SLAs and analytics."
+    />
+    <meta property="og:title" content="ZenithDesk - Help desk and AI chat for every support team" />
+    <meta
+      property="og:description"
+      content="Tickets, SLAs, analytics and an AI chat widget that answers, raises tickets and captures enquiries - in one place."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#4F46E5" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        var t = localStorage.getItem('zenithdesk_theme');
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body class="bg-white font-sans text-gray-900 antialiased">
+    <!-- Brand mark, drawn once and reused. Traced from the brand sheet. -->
+    <svg width="0" height="0" class="absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="zd-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#5B50F5" />
+          <stop offset="1" stop-color="#1B1466" />
+        </linearGradient>
+        <linearGradient id="zd-sun" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#FFB547" />
+          <stop offset="1" stop-color="#FF8A3D" />
+        </linearGradient>
+        <mask id="zd-cut" maskUnits="userSpaceOnUse" x="-40" y="-100" width="480" height="520">
+          <path d="M0 0H285A84 84 0 0 0 367 83L135 307H369V390H0V307L232 83H0Z" fill="#fff" />
+          <circle cx="0" cy="348" r="26" />
+          <circle cx="369" cy="348" r="26" />
+          <rect x="264" y="303" width="15" height="19" rx="3" />
+          <rect x="264" y="339" width="15" height="19" rx="3" />
+          <rect x="264" y="375" width="15" height="19" rx="3" />
+        </mask>
+      </defs>
+      <symbol id="zd-mark" viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="24" fill="url(#zd-bg)" />
+        <g transform="translate(18 24) scale(0.1545)">
+          <path d="M0 0H285A84 84 0 0 0 367 83L135 307H369V390H0V307L232 83H0Z" fill="#fff" mask="url(#zd-cut)" />
+          <circle cx="369" cy="0" r="55" fill="url(#zd-sun)" />
+        </g>
+      </symbol>
+    </svg>
+
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-white"
+      >Skip to content</a
+    >
+
+    <!-- Header -->
+    <header data-header class="sticky top-0 z-40 border-b border-gray-200/70 bg-white/80 backdrop-blur-md transition-shadow">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3.5 sm:px-6 lg:px-8">
+        <a href="#top" class="flex items-center gap-2.5" aria-label="ZenithDesk home">
+          <svg class="size-8 drop-shadow-sm"><use href="#zd-mark" /></svg>
+          <span class="font-display text-lg leading-none tracking-tight">
+            <span class="font-bold text-ink">Zenith</span><span class="text-[#4F46E5] dark:text-lavender">Desk</span>
+          </span>
+        </a>
+
+        <nav class="hidden items-center gap-8 text-sm font-medium text-gray-600 lg:flex" aria-label="Main">
+          <a href="#platform" class="transition hover:text-gray-900">Platform</a>
+          <a href="#chatbot" class="transition hover:text-gray-900">AI chatbot</a>
+          <a href="#how" class="transition hover:text-gray-900">How it works</a>
+          <a href="#security" class="transition hover:text-gray-900">Security</a>
+          <a href="#faq" class="transition hover:text-gray-900">FAQ</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            data-theme-toggle
+            class="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+          >
+            <svg data-icon="moon" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+              <path fill-rule="evenodd" d="M7.455 2.004a.75.75 0 0 1 .26.77 7 7 0 0 0 9.958 7.967.75.75 0 0 1 1.067.853A8.5 8.5 0 1 1 6.647 1.921a.75.75 0 0 1 .808.083Z" clip-rule="evenodd" />
+            </svg>
+            <svg data-icon="sun" viewBox="0 0 20 20" fill="currentColor" class="hidden size-5" aria-hidden="true">
+              <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.06ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.061 1.06l1.06 1.06Z" />
+            </svg>
+          </button>
+          <a data-portal="/login" href="#" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:text-gray-900 sm:inline-flex">Sign in</a>
+          <a
+            data-portal="/register"
+            href="#"
+            class="hidden rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 dark:bg-indigo-600 dark:text-white sm:inline-flex"
+            >Get started</a
+          >
+          <button
+            type="button"
+            data-menu-button
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            aria-label="Menu"
+            class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+              <path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 5A.75.75 0 0 1 2.75 9h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 9.75Zm0 5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="mobile-menu" data-menu class="hidden border-t border-gray-200 bg-white px-4 py-3 lg:hidden">
+        <nav class="flex flex-col gap-1 text-sm font-medium text-gray-700" aria-label="Mobile">
+          <a href="#platform" class="rounded-lg px-3 py-2 hover:bg-gray-100">Platform</a>
+          <a href="#chatbot" class="rounded-lg px-3 py-2 hover:bg-gray-100">AI chatbot</a>
+          <a href="#how" class="rounded-lg px-3 py-2 hover:bg-gray-100">How it works</a>
+          <a href="#security" class="rounded-lg px-3 py-2 hover:bg-gray-100">Security</a>
+          <a href="#faq" class="rounded-lg px-3 py-2 hover:bg-gray-100">FAQ</a>
+          <div class="mt-2 flex gap-2 border-t border-gray-200 pt-3">
+            <a data-portal="/login" href="#" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center">Sign in</a>
+            <a data-portal="/register" href="#" class="flex-1 rounded-lg bg-indigo-600 px-3 py-2 text-center text-white">Get started</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section id="top" class="relative overflow-hidden">
+        <div class="glow pointer-events-none absolute inset-0" aria-hidden="true"></div>
+        <div class="dot-grid pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" aria-hidden="true"></div>
+
+        <div class="relative mx-auto grid max-w-7xl items-center gap-14 px-4 pb-24 [&>*]:min-w-0 pt-14 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:px-8 lg:pb-28 lg:pt-20">
+          <div data-reveal>
+            <span class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-sm font-medium text-gray-600 shadow-sm">
+              <span class="size-2 rounded-full bg-emerald-500"></span>
+              Help desk + AI chat widget
+            </span>
+            <h1 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Every question answered.
+              <span class="text-gradient block">Every ticket resolved.</span>
+            </h1>
+            <p class="mt-6 max-w-xl text-lg leading-relaxed text-gray-600">
+              ZenithDesk gives your team one inbox for every support request, with SLAs, macros and analytics - and a chat
+              widget for your website that answers from your knowledge base, raises tickets, and captures sales enquiries.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+              <a
+                data-portal="/register"
+                href="#"
+                class="inline-flex items-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-900/10 transition hover:-translate-y-0.5 hover:opacity-95 dark:bg-indigo-600"
+              >
+                Start free
+                <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" /></svg>
+              </a>
+              <a
+                href="#platform"
+                class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3.5 text-sm font-semibold text-gray-800 transition hover:border-gray-400"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" class="size-4 text-indigo-600" aria-hidden="true"><path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.344-5.891a1.5 1.5 0 0 0 0-2.538L6.3 2.841Z" /></svg>
+                See the platform
+              </a>
+            </div>
+            <dl class="mt-12 grid max-w-lg grid-cols-3 divide-x divide-gray-200 whitespace-nowrap">
+              <div class="pr-3 sm:pr-5">
+                <dt class="text-sm text-gray-500">Chat widget</dt>
+                <dd class="font-display text-xl font-bold text-ink sm:text-2xl">24/7</dd>
+              </div>
+              <div class="px-3 sm:px-5">
+                <dt class="text-sm text-gray-500">Bot jobs</dt>
+                <dd class="font-display text-xl font-bold text-ink sm:text-2xl">4-in-1</dd>
+              </div>
+              <div class="pl-3 sm:pl-5">
+                <dt class="text-sm text-gray-500">Setup</dt>
+                <dd class="font-display text-xl font-bold text-ink sm:text-2xl">1 snippet</dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Hero visual: the product, drawn in markup so it stays sharp and themed -->
+          <div class="relative" data-reveal aria-hidden="true">
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-indigo-900/10">
+              <div class="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
+                <span class="size-3 rounded-full bg-[#ff5f57]"></span>
+                <span class="size-3 rounded-full bg-[#febc2e]"></span>
+                <span class="size-3 rounded-full bg-[#28c840]"></span>
+                <span class="ml-3 flex-1 truncate rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-500">portal.zenithdesk.site/dashboard</span>
+              </div>
+              <div class="flex">
+                <div class="hidden w-14 flex-col items-center gap-3 border-r border-gray-200 py-4 sm:flex">
+                  <svg class="size-7"><use href="#zd-mark" /></svg>
+                  <span class="mt-2 size-7 rounded-lg bg-indigo-50"></span>
+                  <span class="size-7 rounded-lg bg-gray-100"></span>
+                  <span class="size-7 rounded-lg bg-gray-100"></span>
+                  <span class="size-7 rounded-lg bg-gray-100"></span>
+                </div>
+                <div class="flex-1 space-y-3 p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-semibold text-gray-900">Dashboard</p>
+                      <p class="text-[11px] text-gray-500">Last 30 days</p>
+                    </div>
+                    <span class="rounded-md border border-gray-200 px-2 py-1 text-[11px] text-gray-500">Last 30 days ▾</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div class="rounded-lg border border-gray-200 p-2.5"><p class="text-[10px] text-gray-500">Created</p><p class="text-lg font-bold text-gray-900">214</p></div>
+                    <div class="rounded-lg border border-gray-200 p-2.5"><p class="text-[10px] text-gray-500">Resolved</p><p class="text-lg font-bold text-gray-900">198</p></div>
+                    <div class="rounded-lg border border-gray-200 p-2.5"><p class="text-[10px] text-gray-500">First response</p><p class="text-lg font-bold text-gray-900">1.4h</p></div>
+                    <div class="rounded-lg border border-gray-200 p-2.5"><p class="text-[10px] text-gray-500">Resolution</p><p class="text-lg font-bold text-gray-900">9.2h</p></div>
+                  </div>
+                  <div class="grid gap-2 sm:grid-cols-[1.6fr_1fr]">
+                    <div class="rounded-lg border border-gray-200 p-3">
+                      <p class="mb-2 text-[11px] font-semibold text-gray-700">Created vs. resolved</p>
+                      <svg viewBox="0 0 240 90" class="w-full">
+                        <path d="M0 70 L30 60 L60 64 L90 45 L120 50 L150 32 L180 36 L210 22 L240 26" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M0 78 L30 70 L60 72 L90 58 L120 60 L150 46 L180 44 L210 34 L240 32" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="0" y1="88" x2="240" y2="88" stroke="currentColor" class="text-gray-200" />
+                      </svg>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 p-3">
+                      <p class="mb-2 text-[11px] font-semibold text-gray-700">By priority</p>
+                      <div class="flex h-2.5 overflow-hidden rounded-full">
+                        <span class="w-[18%] bg-gray-400"></span><span class="w-[44%] bg-sky-500"></span><span class="w-[26%] bg-orange-500"></span><span class="w-[12%] bg-red-500"></span>
+                      </div>
+                      <ul class="mt-3 space-y-1.5 text-[10px] text-gray-600">
+                        <li class="flex justify-between"><span>Medium</span><b class="text-gray-900">94</b></li>
+                        <li class="flex justify-between"><span>High</span><b class="text-gray-900">56</b></li>
+                        <li class="flex justify-between"><span>Urgent</span><b class="text-gray-900">25</b></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Floating cards -->
+            <div class="float absolute -bottom-8 -left-4 hidden rounded-xl border border-gray-200 bg-white px-3.5 py-3 shadow-xl sm:flex sm:items-center sm:gap-3 lg:-left-10">
+              <span class="flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" /></svg>
+              </span>
+              <div>
+                <p class="text-[11px] text-gray-500">Ticket #1042</p>
+                <p class="text-sm font-semibold text-gray-900">Resolved within SLA</p>
+              </div>
+            </div>
+
+            <div class="float-delay absolute -bottom-10 right-2 w-64 rounded-2xl border border-gray-200 bg-white shadow-2xl sm:right-6">
+              <div class="flex items-center gap-2 rounded-t-2xl bg-indigo-600 px-3.5 py-2.5 text-white">
+                <svg class="size-6"><use href="#zd-mark" /></svg>
+                <div>
+                  <p class="text-xs font-semibold">Acme Support</p>
+                  <p class="text-[10px] text-white/75">Typically replies instantly</p>
+                </div>
+              </div>
+              <div class="space-y-2 p-3 text-[11px]">
+                <p class="ml-auto w-fit max-w-[85%] rounded-xl rounded-br-sm bg-indigo-600 px-2.5 py-1.5 text-white">Can I get a quote for 20 seats?</p>
+                <p class="w-fit max-w-[90%] rounded-xl rounded-bl-sm bg-gray-100 px-2.5 py-1.5 text-gray-800">Happy to help! Who should our team get back to?</p>
+                <p class="typing flex w-fit gap-1 rounded-xl bg-gray-100 px-3 py-2"><span class="size-1.5 rounded-full bg-gray-500"></span><span class="size-1.5 rounded-full bg-gray-500"></span><span class="size-1.5 rounded-full bg-gray-500"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Platform -->
+      <section id="platform" class="border-t border-gray-200 bg-gray-50 py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="mx-auto max-w-3xl text-center" data-reveal>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Platform</p>
+            <h2 class="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">Your whole support desk, in one place</h2>
+            <p class="mt-5 text-lg leading-relaxed text-gray-600">
+              From the first chat message to the resolved ticket - an inbox, SLAs, macros, a knowledge base, a customer portal
+              and analytics, all sharing the same data.
+            </p>
+            <ul class="mt-8 flex flex-wrap justify-center gap-2.5 text-sm font-medium text-gray-700">
+              <li class="rounded-full border border-gray-200 bg-white px-4 py-2">⚡ Macros</li>
+              <li class="rounded-full border border-gray-200 bg-white px-4 py-2">⏱ SLA timers</li>
+              <li class="rounded-full border border-gray-200 bg-white px-4 py-2">📚 Knowledge base</li>
+              <li class="rounded-full border border-gray-200 bg-white px-4 py-2">🏢 Multi-organization</li>
+            </ul>
+          </div>
+
+          <!-- Feature 1: inbox -->
+          <div class="mt-20 grid items-center gap-12 lg:grid-cols-2 [&>*]:min-w-0" data-reveal>
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-indigo-900/5" aria-hidden="true">
+              <div class="mb-3 flex items-center justify-between">
+                <p class="text-sm font-semibold text-gray-900">Tickets</p>
+                <div class="flex gap-1.5 text-[11px]">
+                  <span class="rounded-md bg-indigo-50 px-2 py-1 font-medium text-indigo-700">My open</span>
+                  <span class="hidden rounded-md px-2 py-1 text-gray-500 sm:inline">Urgent</span>
+                  <span class="hidden rounded-md px-2 py-1 text-gray-500 sm:inline">Unassigned</span>
+                </div>
+              </div>
+              <ul class="divide-y divide-gray-100 text-sm">
+                <li class="flex items-center gap-3 py-3">
+                  <span class="text-xs text-gray-400">#1048</span>
+                  <span class="flex-1 truncate font-medium text-gray-900">Invoice shows the wrong billing address</span>
+                  <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">At risk</span>
+                  <span class="hidden rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 sm:inline">Open</span>
+                </li>
+                <li class="flex items-center gap-3 py-3">
+                  <span class="text-xs text-gray-400">#1047</span>
+                  <span class="flex-1 truncate font-medium text-gray-900">Can't reset my password from the app</span>
+                  <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">On track</span>
+                  <span class="hidden rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 sm:inline">Pending</span>
+                </li>
+                <li class="flex items-center gap-3 py-3">
+                  <span class="text-xs text-gray-400">#1046</span>
+                  <span class="flex-1 truncate font-medium text-gray-900">Export to CSV times out on large reports</span>
+                  <span class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">Breached</span>
+                  <span class="hidden rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 sm:inline">Open</span>
+                </li>
+                <li class="flex items-center gap-3 py-3">
+                  <span class="text-xs text-gray-400">#1045</span>
+                  <span class="flex-1 truncate font-medium text-gray-900">Feature request: dark mode for the mobile app</span>
+                  <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Met</span>
+                  <span class="hidden rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 sm:inline">Resolved</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p class="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700">Inbox &amp; SLAs</p>
+              <h3 class="mt-4 font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">One queue your whole team can work from</h3>
+              <p class="mt-4 text-lg leading-relaxed text-gray-600">
+                Assign, tag and prioritise every request. Saved views keep each agent on their own work, macros turn a common
+                reply into one click, and SLA timers show what is on track, at risk or breached before a customer has to chase.
+              </p>
+              <ul class="mt-6 grid gap-3 text-gray-700 sm:grid-cols-2">
+                <li class="flex gap-2"><span class="text-indigo-600">✓</span> Priorities, tags and statuses</li>
+                <li class="flex gap-2"><span class="text-indigo-600">✓</span> Saved views per agent</li>
+                <li class="flex gap-2"><span class="text-indigo-600">✓</span> First-response &amp; resolution SLAs</li>
+                <li class="flex gap-2"><span class="text-indigo-600">✓</span> Macros for common replies</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Feature 2: analytics -->
+          <div class="mt-24 grid items-center gap-12 lg:grid-cols-2 [&>*]:min-w-0" data-reveal>
+            <div class="lg:order-2 rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-indigo-900/5" aria-hidden="true">
+              <p class="text-sm font-semibold text-gray-900">By category</p>
+              <ul class="mt-4 space-y-3 text-xs">
+                <li><div class="mb-1 flex justify-between text-gray-600"><span>Billing</span><b class="text-gray-900">80</b></div><div class="h-3 rounded-full bg-gray-100"><div class="h-3 w-full rounded-full bg-indigo-600"></div></div></li>
+                <li><div class="mb-1 flex justify-between text-gray-600"><span>Account</span><b class="text-gray-900">52</b></div><div class="h-3 rounded-full bg-gray-100"><div class="h-3 w-[65%] rounded-full bg-indigo-600"></div></div></li>
+                <li><div class="mb-1 flex justify-between text-gray-600"><span>Technical</span><b class="text-gray-900">41</b></div><div class="h-3 rounded-full bg-gray-100"><div class="h-3 w-[51%] rounded-full bg-indigo-600"></div></div></li>
+                <li><div class="mb-1 flex justify-between text-gray-600"><span>Bug</span><b class="text-gray-900">20</b></div><div class="h-3 rounded-full bg-gray-100"><div class="h-3 w-[25%] rounded-full bg-indigo-600"></div></div></li>
+              </ul>
+              <div class="mt-6 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-gray-50 p-3"><p class="text-[11px] text-gray-500">Avg first response</p><p class="font-display text-xl font-bold text-gray-900">1.4h</p></div>
+                <div class="rounded-xl bg-gray-50 p-3"><p class="text-[11px] text-gray-500">Avg resolution</p><p class="font-display text-xl font-bold text-gray-900">9.2h</p></div>
+              </div>
+            </div>
+            <div class="lg:order-1">
+              <p class="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700">Analytics</p>
+              <h3 class="mt-4 font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">See where your support time goes</h3>
+              <p class="mt-4 text-lg leading-relaxed text-gray-600">
+                Tickets created against resolved, response and resolution times, and the breakdown by priority, category and
+                agent - over the last week, month or quarter.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 3: customer portal -->
+          <div class="mt-24 grid items-center gap-12 lg:grid-cols-2 [&>*]:min-w-0" data-reveal>
+            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-indigo-900/5" aria-hidden="true">
+              <p class="text-sm font-semibold text-gray-900">Check your ticket status</p>
+              <p class="mt-1 text-xs text-gray-500">We sent a 6-digit code to asha@raotraders.in</p>
+              <div class="mt-4 flex gap-2">
+                <span class="flex size-10 items-center justify-center rounded-lg border border-gray-300 font-semibold text-gray-900">4</span>
+                <span class="flex size-10 items-center justify-center rounded-lg border border-gray-300 font-semibold text-gray-900">8</span>
+                <span class="flex size-10 items-center justify-center rounded-lg border border-gray-300 font-semibold text-gray-900">1</span>
+                <span class="flex size-10 items-center justify-center rounded-lg border-2 border-indigo-500 font-semibold text-gray-900">0</span>
+                <span class="flex size-10 items-center justify-center rounded-lg border border-gray-300"></span>
+                <span class="flex size-10 items-center justify-center rounded-lg border border-gray-300"></span>
+              </div>
+              <div class="mt-5 space-y-2 text-sm">
+                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5"><span class="text-gray-800">#1047 · Password reset</span><span class="text-[11px] font-medium text-indigo-700">Pending</span></div>
+                <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5"><span class="text-gray-800">#1031 · Refund request</span><span class="text-[11px] font-medium text-gray-500">Resolved</span></div>
+              </div>
+            </div>
+            <div>
+              <p class="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700">Customer portal</p>
+              <h3 class="mt-4 font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">Customers check in without writing in</h3>
+              <p class="mt-4 text-lg leading-relaxed text-gray-600">
+                A customer confirms their email with a one-time code and sees every ticket they have raised, with its status
+                and replies - no password to remember, and fewer "any update?" messages for your team.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI chatbot -->
+      <section id="chatbot" class="overflow-hidden py-20 lg:py-28">
+        <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+          <div data-reveal>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">AI chatbot</p>
+            <h2 class="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">One bot, set up the way your business works</h2>
+            <p class="mt-5 text-lg leading-relaxed text-gray-600">
+              Add one line to your website and a chat widget in your colours starts helping visitors. Choose what it does:
+              answer from your knowledge base, raise support tickets, take sales enquiries, or let customers check a ticket's
+              status - any mix of the four.
+            </p>
+
+            <div class="mt-8" role="group" aria-label="Try a preset">
+              <p class="mb-3 text-sm font-medium text-gray-500">Try a preset</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" data-preset="enquiry" aria-pressed="false" class="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-400 aria-pressed:border-indigo-600 aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700">Enquiry only</button>
+                <button type="button" data-preset="support" aria-pressed="false" class="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-400 aria-pressed:border-indigo-600 aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700">Support only</button>
+                <button type="button" data-preset="both" aria-pressed="true" class="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-400 aria-pressed:border-indigo-600 aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700">Enquiry + support</button>
+              </div>
+              <ul class="mt-5 grid gap-3 sm:grid-cols-2">
+                <li data-purpose="enquiry" data-on class="group rounded-xl border border-gray-200 p-4 opacity-45 transition data-[on]:border-indigo-500/50 data-[on]:bg-indigo-50/60 data-[on]:opacity-100">
+                  <p class="font-semibold text-gray-900">Take enquiries</p>
+                  <p class="mt-1 text-sm text-gray-500">Name, email or phone, and company - straight to your Enquiries page and inbox.</p>
+                </li>
+                <li data-purpose="support" data-on class="rounded-xl border border-gray-200 p-4 opacity-45 transition data-[on]:border-indigo-500/50 data-[on]:bg-indigo-50/60 data-[on]:opacity-100">
+                  <p class="font-semibold text-gray-900">Raise tickets</p>
+                  <p class="mt-1 text-sm text-gray-500">Asks for the details, category and urgency, then opens the ticket for you.</p>
+                </li>
+                <li data-purpose="knowledge" data-on class="rounded-xl border border-gray-200 p-4 opacity-45 transition data-[on]:border-indigo-500/50 data-[on]:bg-indigo-50/60 data-[on]:opacity-100">
+                  <p class="font-semibold text-gray-900">Answer from your articles</p>
+                  <p class="mt-1 text-sm text-gray-500">Only ever answers from what you have published - never makes it up.</p>
+                </li>
+                <li data-purpose="status" data-on class="rounded-xl border border-gray-200 p-4 opacity-45 transition data-[on]:border-indigo-500/50 data-[on]:bg-indigo-50/60 data-[on]:opacity-100">
+                  <p class="font-semibold text-gray-900">Check ticket status</p>
+                  <p class="mt-1 text-sm text-gray-500">Customers confirm their email and see their open tickets in the chat.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Widget mock that follows the preset -->
+          <div class="relative mx-auto w-full max-w-sm" data-reveal aria-hidden="true">
+            <div class="glow absolute -inset-10 -z-10 rounded-full"></div>
+            <div class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl shadow-indigo-900/15">
+              <div class="bg-gradient-to-br from-[#5B50F5] to-[#2a2294] px-5 pb-6 pt-5 text-white">
+                <div class="flex items-center gap-2.5">
+                  <svg class="size-9 rounded-xl ring-2 ring-white/30"><use href="#zd-mark" /></svg>
+                  <div>
+                    <p class="text-sm font-semibold">Acme</p>
+                    <p class="flex items-center gap-1.5 text-xs text-white/75"><span class="size-1.5 rounded-full bg-emerald-400"></span> Replies instantly</p>
+                  </div>
+                </div>
+                <p class="mt-5 font-display text-xl font-semibold leading-snug">Hi there 👋<br />How can we help today?</p>
+              </div>
+              <div class="space-y-3 p-4 text-sm">
+                <p class="w-fit max-w-[90%] rounded-2xl rounded-tl-sm bg-gray-100 px-3.5 py-2.5 text-gray-800">
+                  Hi! I'm here to help - ask about our products, report a problem, or check on a ticket.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span data-chip="enquiry" class="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-700">Make an enquiry</span>
+                  <span data-chip="support" class="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-700">Report a problem</span>
+                  <span data-chip="status" class="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-700">Check my ticket status</span>
+                </div>
+                <p class="ml-auto w-fit max-w-[85%] rounded-2xl rounded-tr-sm bg-indigo-600 px-3.5 py-2.5 text-white">How long do refunds take?</p>
+                <div class="w-fit max-w-[90%] rounded-2xl rounded-tl-sm bg-gray-100 px-3.5 py-2.5 text-gray-800">
+                  Refunds are issued within 7 days of your request.
+                  <p class="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-500">📄 From: Refund policy</p>
+                </div>
+              </div>
+              <div class="border-t border-gray-200 p-3">
+                <div class="flex items-center gap-2 rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-400">
+                  Type your message…
+                  <span class="ml-auto flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-white">↑</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- And more -->
+      <section class="border-y border-gray-200 bg-gray-50 py-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 class="text-center font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl" data-reveal>And more, built in</h2>
+          <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-reveal>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">🎨</p><p class="mt-3 font-semibold text-gray-900">Your brand, your widget</p><p class="mt-1 text-sm text-gray-500">Colours, fonts, logo, wording and position - previewed live.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">📎</p><p class="mt-3 font-semibold text-gray-900">Attachments</p><p class="mt-1 text-sm text-gray-500">Screenshots and PDFs from the chat land on the ticket, type-checked.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">👥</p><p class="mt-3 font-semibold text-gray-900">Team roles</p><p class="mt-1 text-sm text-gray-500">Admins manage settings; agents work the queue.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">🔎</p><p class="mt-3 font-semibold text-gray-900">Search everything</p><p class="mt-1 text-sm text-gray-500">Tickets, customers, tags or a ticket number from one box.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">✉️</p><p class="mt-3 font-semibold text-gray-900">Enquiry alerts</p><p class="mt-1 text-sm text-gray-500">Each new lead emailed to the one address you choose.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">🌐</p><p class="mt-3 font-semibold text-gray-900">Allowed sites</p><p class="mt-1 text-sm text-gray-500">The widget only runs on the websites you list.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">🌙</p><p class="mt-3 font-semibold text-gray-900">Light &amp; dark</p><p class="mt-1 text-sm text-gray-500">A portal that is easy on the eyes on a long shift.</p></li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5"><p class="text-2xl">🔄</p><p class="mt-3 font-semibold text-gray-900">Pick up where they left off</p><p class="mt-1 text-sm text-gray-500">A chat survives a reload or a move to another page.</p></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how" class="py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="mx-auto max-w-2xl text-center" data-reveal>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">How it works</p>
+            <h2 class="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">Live in an afternoon</h2>
+          </div>
+          <ol class="mt-14 grid gap-6 md:grid-cols-3" data-reveal>
+            <li class="relative rounded-2xl border border-gray-200 p-6">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-600 font-display font-bold text-white">1</span>
+              <h3 class="mt-5 text-lg font-semibold text-gray-900">Create your workspace</h3>
+              <p class="mt-2 text-gray-600">Sign up, name your organization, and invite your agents.</p>
+            </li>
+            <li class="relative rounded-2xl border border-gray-200 p-6">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-600 font-display font-bold text-white">2</span>
+              <h3 class="mt-5 text-lg font-semibold text-gray-900">Set up your bot</h3>
+              <p class="mt-2 text-gray-600">Pick what it does, add a few articles, and style the widget to match your site.</p>
+            </li>
+            <li class="relative rounded-2xl border border-gray-200 p-6">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-600 font-display font-bold text-white">3</span>
+              <h3 class="mt-5 text-lg font-semibold text-gray-900">Paste one snippet</h3>
+              <p class="mt-2 text-gray-600">Tickets and enquiries start arriving in your ZenithDesk inbox.</p>
+            </li>
+          </ol>
+          <div class="mx-auto mt-10 max-w-2xl overflow-x-auto rounded-xl bg-midnight p-4 font-mono text-xs text-[#E4E2F5] ring-1 ring-white/10 sm:text-sm" data-reveal>
+            <code>&lt;script src="https://chat.zenithdesk.site/widget.js" data-key="zdw_…" defer&gt;&lt;/script&gt;</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- Security -->
+      <section id="security" class="border-t border-gray-200 bg-gray-50 py-20 lg:py-28">
+        <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+          <div data-reveal>
+            <p class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-semibold uppercase tracking-wide text-indigo-700">🛡 Security</p>
+            <h2 class="mt-5 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">Built so one team never sees another's data</h2>
+            <p class="mt-5 text-lg leading-relaxed text-gray-600">
+              Every record belongs to one organization, and every query is scoped to it by design - with a guard that refuses
+              any query that forgets. Sessions are short-lived and rotate, and the public-facing parts are rate limited.
+            </p>
+            <ul class="mt-6 flex flex-wrap gap-2 text-xs font-semibold text-gray-700">
+              <li class="rounded-lg border border-gray-200 bg-white px-3 py-1.5">Org-scoped queries</li>
+              <li class="rounded-lg border border-gray-200 bg-white px-3 py-1.5">Rotating sessions</li>
+              <li class="rounded-lg border border-gray-200 bg-white px-3 py-1.5">One-time email codes</li>
+              <li class="rounded-lg border border-gray-200 bg-white px-3 py-1.5">Rate limiting</li>
+              <li class="rounded-lg border border-gray-200 bg-white px-3 py-1.5">HTTPS everywhere</li>
+            </ul>
+          </div>
+          <ul class="grid gap-4 sm:grid-cols-2" data-reveal>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-lg">🏢</span>
+              <p class="mt-4 font-semibold text-indigo-600">Tenant isolation</p>
+              <p class="mt-1 text-sm text-gray-500">Each organization's tickets, customers and settings are walled off.</p>
+            </li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-lg">🔑</span>
+              <p class="mt-4 font-semibold text-emerald-700">Passwordless customers</p>
+              <p class="mt-1 text-sm text-gray-500">Customers prove their email with a code; no passwords to leak.</p>
+            </li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-lg">🧾</span>
+              <p class="mt-4 font-semibold text-sky-700">Checked uploads</p>
+              <p class="mt-1 text-sm text-gray-500">Files are verified by their contents, not just their name.</p>
+            </li>
+            <li class="rounded-2xl border border-gray-200 bg-white p-5">
+              <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-lg">🌐</span>
+              <p class="mt-4 font-semibold text-amber-700">Your sites only</p>
+              <p class="mt-1 text-sm text-gray-500">The chat widget refuses to load on sites you have not allowed.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="py-20 lg:py-28">
+        <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <h2 class="text-center font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl" data-reveal>Questions, answered</h2>
+          <div class="mt-12 divide-y divide-gray-200 border-y border-gray-200" data-reveal>
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                Does the bot make up answers?
+                <span class="text-gray-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-3 text-gray-600">No. It only answers from the knowledge-base articles you publish, and it has to quote the sentence it relied on. When your articles don't cover a question, it says so and offers a ticket or an enquiry instead.</p>
+            </details>
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                Can I use it only for sales enquiries?
+                <span class="text-gray-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-3 text-gray-600">Yes. In Settings → Chatbot, choose "Enquiry only". The bot takes down name, email or phone, and company, and anything else gets a polite reply in your own words - for example, where to go for support.</p>
+            </details>
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                How do I add the chat widget to my website?
+                <span class="text-gray-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-3 text-gray-600">Copy the one-line snippet from Settings → Chat widget and paste it before the closing &lt;/body&gt; tag on your site, then list that site under Allowed sites.</p>
+            </details>
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                Can customers see their tickets?
+                <span class="text-gray-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-3 text-gray-600">Yes - through the customer portal, or by asking the chat widget. Either way they confirm their email with a one-time code first.</p>
+            </details>
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                Who gets told about a new enquiry?
+                <span class="text-gray-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-3 text-gray-600">Only the email address you set as your enquiry alert address. Every enquiry is also listed on the Enquiries page, where your team can mark it contacted or closed and keep notes.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Closing CTA -->
+      <section class="relative overflow-hidden border-t border-gray-200 bg-gray-50 py-24">
+        <div class="glow pointer-events-none absolute inset-0" aria-hidden="true"></div>
+        <div class="relative mx-auto max-w-3xl px-4 text-center sm:px-6" data-reveal>
+          <h2 class="font-display text-4xl font-bold leading-tight tracking-tight text-ink sm:text-6xl">
+            Ready to reach your
+            <span class="text-gradient block">support zenith?</span>
+          </h2>
+          <p class="mx-auto mt-6 max-w-xl text-lg text-gray-600">Set up your help desk and chat widget today - your first tickets and enquiries can arrive this afternoon.</p>
+          <div class="mt-9 flex flex-wrap justify-center gap-3">
+            <a data-portal="/register" href="#" class="inline-flex items-center gap-2 rounded-xl bg-ink px-7 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 dark:bg-indigo-600">Start free →</a>
+            <a data-portal="/login" href="#" class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-gray-800 transition hover:border-gray-400">Sign in to your desk</a>
+          </div>
+          <ul class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
+            <li class="flex items-center gap-1.5"><span class="text-emerald-600">✓</span> Free to get started</li>
+            <li class="flex items-center gap-1.5"><span class="text-emerald-600">✓</span> One-line setup</li>
+            <li class="flex items-center gap-1.5"><span class="text-emerald-600">✓</span> Works on any website</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200">
+      <div class="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
+        <div>
+          <a href="#top" class="flex items-center gap-2.5" aria-label="ZenithDesk home">
+            <svg class="size-8"><use href="#zd-mark" /></svg>
+            <span class="font-display text-lg leading-none tracking-tight"><span class="font-bold text-ink">Zenith</span><span class="text-[#4F46E5] dark:text-lavender">Desk</span></span>
+          </a>
+          <p class="mt-4 max-w-xs text-sm text-gray-500">A help desk and AI chat widget for teams that want every customer answered.</p>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-900">Product</h3>
+          <ul class="mt-4 space-y-2.5 text-sm text-gray-600">
+            <li><a href="#platform" class="hover:text-gray-900">Platform</a></li>
+            <li><a href="#chatbot" class="hover:text-gray-900">AI chatbot</a></li>
+            <li><a href="#security" class="hover:text-gray-900">Security</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-900">Resources</h3>
+          <ul class="mt-4 space-y-2.5 text-sm text-gray-600">
+            <li><a href="#how" class="hover:text-gray-900">How it works</a></li>
+            <li><a href="#faq" class="hover:text-gray-900">FAQ</a></li>
+            <li><a data-portal="/portal/login" href="#" class="hover:text-gray-900">Customer portal</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-900">Get started</h3>
+          <ul class="mt-4 space-y-2.5 text-sm text-gray-600">
+            <li><a data-portal="/register" href="#" class="hover:text-gray-900">Create account</a></li>
+            <li><a data-portal="/login" href="#" class="hover:text-gray-900">Sign in</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-200">
+        <p class="mx-auto max-w-7xl px-4 py-6 text-sm text-gray-500 sm:px-6 lg:px-8">© <span data-year>2026</span> ZenithDesk. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>

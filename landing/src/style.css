@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #15123f;
+  --color-midnight: #0e0b30;
+  --color-lavender: #b4aeff;
+  --color-sun: #ffb547;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+}
+
+/*
+ * Dark theme by palette swap, the same way the portal does it: greys invert
+ * onto the brand's Midnight/Ink tones and accent tints become washes, so the
+ * markup carries almost no dark: classes of its own.
+ */
+.dark {
+  color-scheme: dark;
+
+  --color-ink: #f4f3fb;
+  --color-gray-50: #0b0920;
+  --color-gray-100: #1c1940;
+  --color-gray-200: #29264f;
+  --color-gray-300: #3a3666;
+  --color-gray-400: #7c77a6;
+  --color-gray-500: #9a96c0;
+  --color-gray-600: #b6b2d8;
+  --color-gray-700: #cfcce9;
+  --color-gray-800: #e3e1f4;
+  --color-gray-900: #f4f3fb;
+
+  --color-indigo-50: color-mix(in oklab, oklch(58.5% 0.233 277.117) 18%, transparent);
+  --color-indigo-100: color-mix(in oklab, oklch(58.5% 0.233 277.117) 28%, transparent);
+  --color-indigo-200: color-mix(in oklab, oklch(58.5% 0.233 277.117) 40%, transparent);
+  --color-indigo-700: oklch(78.5% 0.115 274.713);
+
+  --color-emerald-50: color-mix(in oklab, oklch(69.6% 0.17 162.48) 15%, transparent);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 15%, transparent);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 15%, transparent);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+  --color-rose-50: color-mix(in oklab, oklch(64.5% 0.246 16.439) 15%, transparent);
+  --color-rose-700: oklch(81% 0.117 11.638);
+}
+
+.dark .bg-white {
+  background-color: #14112f;
+}
+.dark .bg-white\/80 {
+  background-color: rgb(20 17 47 / 0.8);
+}
+.dark .text-indigo-600 {
+  color: oklch(78.5% 0.115 274.713);
+}
+
+/* Soft brand glow behind the hero and the closing band. */
+.glow {
+  background:
+    radial-gradient(60% 50% at 80% 10%, rgb(79 70 229 / 0.14), transparent 70%),
+    radial-gradient(40% 40% at 10% 30%, rgb(255 181 71 / 0.1), transparent 70%);
+}
+.dark .glow {
+  background:
+    radial-gradient(60% 50% at 80% 10%, rgb(79 70 229 / 0.3), transparent 70%),
+    radial-gradient(40% 40% at 10% 30%, rgb(255 181 71 / 0.08), transparent 70%);
+}
+
+.dot-grid {
+  background-image: radial-gradient(rgb(79 70 229 / 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #4f46e5, #7c6cf6 55%, #b4aeff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scroll reveal. Content is visible by default; the script only adds the
+   hidden starting state once it knows it can reveal it again. */
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.reveal-ready [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+.float-delay {
+  animation: float 6s ease-in-out 1.5s infinite;
+}
+
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.typing span {
+  animation: typing 1.2s infinite;
+}
+.typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .float,
+  .float-delay,
+  .typing span {
+    animation: none;
+  }
+  .reveal-ready [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
