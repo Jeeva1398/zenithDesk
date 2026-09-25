@@ -4,8 +4,9 @@ const { verifyToken, TOKEN_TYPES } = require('../utils/token');
 
 // Accepts either a normal agent token or a service token, and is the only place
 // a service token is accepted at all. The chatbot needs to raise a ticket for a
-// customer it has verified; it has no business reading the queue, so its token
-// reaches exactly one route rather than inheriting agent access to all of them.
+// customer, attach the files they sent, and search the published knowledge
+// base; it has no business reading the queue, so its token reaches exactly
+// those routes rather than inheriting agent access to all of them.
 const authenticateAgentOrService = catchAsync(async (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {

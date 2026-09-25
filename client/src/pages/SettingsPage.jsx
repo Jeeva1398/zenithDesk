@@ -12,6 +12,7 @@ import Modal from '../components/Modal';
 import MacrosSection from '../components/MacrosSection';
 import SlaSection from '../components/SlaSection';
 import ChatWidgetSection from '../components/ChatWidgetSection';
+import KnowledgeSection from '../components/KnowledgeSection';
 import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
 
 const ROLES = ['agent', 'admin'];
@@ -473,6 +474,7 @@ function SettingsPage() {
       <MacrosSection />
       <SlaSection />
       <ChatWidgetSection />
+      <KnowledgeSection />
     </div>
   );
 }
