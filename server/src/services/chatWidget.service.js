@@ -285,23 +285,35 @@ async function regenerateKey(orgId) {
   return getSettings(orgId);
 }
 
-// The chatbot's lookup: key in, org and settings out. There is no org context
-// yet - finding the org is what the key is for.
-async function getPublicConfig(publicKey) {
-  if (typeof publicKey !== 'string' || !/^zdw_[0-9a-f]{32}$/.test(publicKey)) {
-    throw new ApiError(404, 'Unknown widget key');
-  }
+const KEY_PATTERN = /^zdw_[0-9a-f]{32}$/;
+
+async function findByKey(publicKey) {
+  if (typeof publicKey !== 'string' || !KEY_PATTERN.test(publicKey)) return null;
 
   const [rows] = await pool.query(
     '/* unscoped: widget key lookup, which is how the org is found */ SELECT * FROM chat_widget_settings WHERE public_key = ?',
     [publicKey],
   );
-  if (rows.length === 0) {
+  return rows[0] || null;
+}
+
+// The chatbot's lookup: key in, org and settings out. There is no org context
+// yet - finding the org is what the key is for.
+async function getPublicConfig(publicKey) {
+  const row = await findByKey(publicKey);
+  if (!row) {
     throw new ApiError(404, 'Unknown widget key');
   }
 
-  const { theme, tools, allowedDomains } = present(rows[0]);
-  return { orgId: rows[0].org_id, theme, tools, allowedDomains };
+  const { theme, tools, allowedDomains } = present(row);
+  return { orgId: row.org_id, theme, tools, allowedDomains };
+}
+
+// Which org a widget key belongs to, or null. A platform service token acts
+// for whichever org the widget it names belongs to.
+async function findOrgIdByKey(publicKey) {
+  const row = await findByKey(publicKey);
+  return row ? row.org_id : null;
 }
 
 module.exports = {
@@ -314,5 +326,6 @@ module.exports = {
   updateSettings,
   regenerateKey,
   getPublicConfig,
+  findOrgIdByKey,
   normalizeDomain,
 };
