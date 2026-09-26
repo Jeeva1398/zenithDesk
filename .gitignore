@@ -1,6 +1,7 @@
 node_modules/
 .env
-landing/.env.production.local
+landing/.env.*
+!landing/.env.example
 dist/
 *.log
 *.md
