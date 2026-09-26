@@ -104,3 +104,50 @@ if (chatbotUrl && widgetKey) {
   script.defer = true;
   document.body.appendChild(script);
 }
+
+// The contact form posts through the same chat server and widget key, so its
+// messages land on the Enquiries page. Without them there is nowhere to send
+// it, and the section stays hidden.
+const contactForm = document.querySelector('[data-contact-form]');
+if (chatbotUrl && widgetKey && contactForm) {
+  document.querySelectorAll('[data-contact-section], [data-contact-link]').forEach((el) => el.classList.remove('hidden'));
+
+  const status = contactForm.querySelector('[data-contact-status]');
+  const submit = contactForm.querySelector('button[type="submit"]');
+  const showStatus = (text, ok) => {
+    status.textContent = text;
+    status.className = `text-sm ${ok ? 'text-emerald-700' : 'text-rose-700'}`;
+  };
+
+  contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(
+      [...new FormData(contactForm)].map(([key, value]) => [key, String(value).trim()]).filter(([, value]) => value),
+    );
+
+    if (!data.name) return showStatus('Please add your name.', false);
+    if (!data.email && !data.phone) return showStatus('Please add an email or a phone number.', false);
+    if (!data.message) return showStatus('Please tell us how we can help.', false);
+    if (data.email && !contactForm.elements.email.checkValidity()) {
+      return showStatus('That email address does not look right.', false);
+    }
+
+    submit.disabled = true;
+    showStatus('Sending…', true);
+    try {
+      const res = await fetch(`${chatbotUrl.replace(/\/$/, '')}/enquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Widget-Key': widgetKey },
+        body: JSON.stringify(data),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Your message could not be sent - please try again.');
+      contactForm.reset();
+      showStatus('Thanks - your message is in. We will be in touch soon.', true);
+    } catch (err) {
+      showStatus(err instanceof TypeError ? 'Could not reach us - check your connection and try again.' : err.message, false);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}

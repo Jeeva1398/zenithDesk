@@ -140,6 +140,16 @@ test.describe('enquiries', () => {
     expect((await post(enquiry({ email: undefined }))).status()).toBe(201);
   });
 
+  test('records whether it came from the chat or a contact form', async ({ request }) => {
+    const { key } = await enquiryOrg(request);
+    const post = (data) => request.post(`${API_URL}/enquiries`, { headers: auth(PLATFORM, key), data });
+
+    const fromForm = await post(enquiry({ source: 'form' }));
+    expect(fromForm.status()).toBe(201);
+    expect((await fromForm.json()).source).toBe('form');
+    expect((await post(enquiry({ source: 'email' }))).status()).toBe(400);
+  });
+
   test('is refused when the org has enquiries turned off', async ({ request }) => {
     const org = await createOrg(request);
     const { publicKey } = await widgetOf(request, org);

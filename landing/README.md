@@ -25,6 +25,12 @@ Copy `.env.example` to `.env.production.local` and set:
   set, the page loads the live ZenithDesk chat widget. Add `https://zenithdesk.site`
   to that widget's allowed sites in Settings → Chat widget.
 
+  The same two values turn on the **Contact** section. Its form posts to the
+  chat server's `POST /enquiries`, and messages land on the Enquiries page
+  marked "contact form". The widget's org must have **Take enquiries** ticked
+  in Settings → Chatbot, or the form says the site isn't taking messages.
+  Without both values the section and its links stay hidden.
+
 ## Deploy
 
 ```bash

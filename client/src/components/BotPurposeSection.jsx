@@ -1,7 +1,49 @@
 import { useEffect, useState } from 'react';
 import { getChatWidgetSettings, updateChatWidgetSettings } from '../api/chatWidget';
 import { useAuth } from '../context/AuthContext';
-import { cardClass, inputClass, labelClass, primaryButtonClass } from '../lib/ui';
+import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
+
+const CHATBOT_URL = (import.meta.env.VITE_CHATBOT_URL || 'http://localhost:4000').replace(/\/$/, '');
+
+// A plain contact form an org can paste into its own site. It posts to the
+// chat server with the widget key, so the same allowed sites apply and the
+// site needs no server of its own. The hidden "website" field is a honeypot.
+function contactFormSnippet(publicKey) {
+  return `<form id="zd-contact">
+  <input name="name" placeholder="Your name" required maxlength="100">
+  <input name="email" type="email" placeholder="Email" maxlength="255">
+  <input name="phone" type="tel" placeholder="Phone" maxlength="30">
+  <input name="company" placeholder="Company" maxlength="150">
+  <textarea name="message" placeholder="How can we help?" required maxlength="5000"></textarea>
+  <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+  <button type="submit">Send</button>
+  <p data-status role="status"></p>
+</form>
+<script>
+document.getElementById('zd-contact').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var form = e.target, status = form.querySelector('[data-status]');
+  var data = Object.fromEntries(new FormData(form));
+  if (!data.email && !data.phone) { status.textContent = 'Please add an email or a phone number.'; return; }
+  form.querySelector('button').disabled = true;
+  try {
+    var res = await fetch('${CHATBOT_URL}/enquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Widget-Key': '${publicKey}' },
+      body: JSON.stringify(data)
+    });
+    var body = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(body.error || 'Something went wrong.');
+    form.reset();
+    status.textContent = 'Thanks - we will be in touch soon.';
+  } catch (err) {
+    status.textContent = err.message;
+  } finally {
+    form.querySelector('button').disabled = false;
+  }
+});
+</script>`;
+}
 
 const PURPOSES = [
   {
@@ -41,6 +83,8 @@ function BotPurposeSection() {
   const isAdmin = agent?.role === 'admin';
 
   const [draft, setDraft] = useState(null);
+  const [publicKey, setPublicKey] = useState('');
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -48,7 +92,10 @@ function BotPurposeSection() {
 
   useEffect(() => {
     getChatWidgetSettings(token)
-      .then((result) => setDraft(result.bot))
+      .then((result) => {
+        setDraft(result.bot);
+        setPublicKey(result.publicKey);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,6 +130,16 @@ function BotPurposeSection() {
   const setField = (field, value) => {
     setSuccess('');
     setDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleCopyForm = async () => {
+    try {
+      await navigator.clipboard.writeText(contactFormSnippet(publicKey));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError('Could not copy - select the code and copy it by hand.');
+    }
   };
 
   const handleSave = async (event) => {
@@ -181,6 +238,25 @@ function BotPurposeSection() {
             />
           </div>
         </fieldset>
+      )}
+
+      {purposes.enquiry && publicKey && (
+        <div className={`${cardClass} p-5`}>
+          <h3 className="text-base font-semibold text-gray-900">Contact form</h3>
+          <p className="mt-0.5 mb-4 text-sm text-gray-500">
+            Want a form on your site as well as the chat? Paste this where it should appear and style it to match. Its
+            messages land on the Enquiries page, marked as from the contact form, and it works on the same allowed sites as
+            the widget.
+          </p>
+          <pre className="max-h-64 overflow-auto rounded-lg bg-[#0E0B30] p-3 text-xs text-[#E4E2F5] ring-1 ring-white/10">
+            <code>{contactFormSnippet(publicKey)}</code>
+          </pre>
+          <div className="mt-2">
+            <button type="button" onClick={handleCopyForm} className={secondaryButtonClass}>
+              {copied ? 'Copied' : 'Copy form'}
+            </button>
+          </div>
+        </div>
       )}
 
       <fieldset className={`${cardClass} p-5`} disabled={disabled}>

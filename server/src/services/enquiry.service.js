@@ -13,6 +13,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE = /^\+?[0-9()\-.\s]+$/;
 const MIN_PHONE_DIGITS = 6;
 const MAX_PAGE_SIZE = 100;
+// Where an enquiry came in: a conversation with the chat widget, or a
+// website's own contact form posting through the chat server.
+const SOURCES = ['chat', 'form'];
 const COLUMNS = 'id, name, email, phone, company, message, status, notes, source, created_at, updated_at';
 
 function optionalText(value, field) {
@@ -59,13 +62,16 @@ async function alertOrg(orgId, enquiry) {
 }
 
 async function createEnquiry(orgId, input) {
+  const source = input.source === undefined ? 'chat' : input.source;
+  if (!SOURCES.includes(source)) throw new ApiError(400, `source must be one of: ${SOURCES.join(', ')}`);
+
   const { purposes } = await chatWidgetService.getBotSettings(orgId);
   if (!purposes.enquiry) {
-    throw new ApiError(409, 'This organization does not take enquiries through the chat widget');
+    throw new ApiError(409, 'This organization does not take enquiries');
   }
 
   const db = forOrg(orgId);
-  const id = await db.insert('enquiries', { ...validateNew(input), source: 'chat' });
+  const id = await db.insert('enquiries', { ...validateNew(input), source });
   const enquiry = await db.get('enquiries', id, 'Enquiry not found', { columns: COLUMNS });
 
   // The enquiry is saved either way; a mail outage must not make the chatbot

@@ -17,12 +17,12 @@ async function sendOtpEmail(to, code) {
   });
 }
 
-// Tells an org that its chat widget took down a new enquiry. Plain text only:
+// Tells an org that its chat widget or contact form took down a new enquiry. Plain text only:
 // every field here was typed by a stranger on a public website, and plain text
 // cannot carry markup or a disguised link into the recipient's inbox.
 async function sendEnquiryAlert(to, { orgName, enquiry }) {
   const lines = [
-    `New enquiry from the chat widget for ${orgName}.`,
+    `New enquiry from your ${enquiry.source === 'form' ? 'website contact form' : 'chat widget'} for ${orgName}.`,
     '',
     `Name:    ${enquiry.name}`,
     enquiry.email ? `Email:   ${enquiry.email}` : null,

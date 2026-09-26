@@ -82,7 +82,7 @@ function EnquiryModal({ enquiry, onClose, onSaved }) {
           </>
         )}
         <dt className="text-gray-500">Received</dt>
-        <dd className="text-gray-900">{formatWhen(enquiry.created_at)} · via chat</dd>
+        <dd className="text-gray-900">{formatWhen(enquiry.created_at)} · via {enquiry.source === 'form' ? 'contact form' : 'chat'}</dd>
       </dl>
 
       <p className={labelClass}>Message</p>
