@@ -17,6 +17,8 @@ const ORG_SCOPED_TABLES = new Set([
   'ticket_attachments',
   'kb_articles',
   'enquiries',
+  'live_chats',
+  'live_chat_messages',
 ]);
 
 // A handful of queries are cross-tenant on purpose: the super-admin platform

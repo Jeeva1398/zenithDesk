@@ -52,7 +52,12 @@ const DEFAULT_BOT = {
   companyDescription: '',
   outOfScopeMessage: '',
   enquiryAlertEmail: '',
+  // Handing a conversation to a person. Off by default, since it only works
+  // when someone is signed in to answer. waitMinutes is how long a visitor
+  // waits for an agent to join before the bot takes the conversation back.
+  handoff: { enabled: false, waitMinutes: 3 },
 };
+const HANDOFF_WAIT_MINUTES = { min: 1, max: 30 };
 const BOT_TEXT_LIMITS = { companyDescription: 500, outOfScopeMessage: 300 };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -247,6 +252,28 @@ function sanitizeTools(input) {
   return tools;
 }
 
+function sanitizeHandoff(input, current) {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new ApiError(400, 'bot.handoff must be an object');
+  }
+  const handoff = { ...DEFAULT_BOT.handoff, ...current };
+  for (const [field, value] of Object.entries(input)) {
+    if (field === 'enabled') {
+      if (typeof value !== 'boolean') throw new ApiError(400, 'bot.handoff.enabled must be true or false');
+      handoff.enabled = value;
+    } else if (field === 'waitMinutes') {
+      const { min, max } = HANDOFF_WAIT_MINUTES;
+      if (!Number.isInteger(value) || value < min || value > max) {
+        throw new ApiError(400, `bot.handoff.waitMinutes must be a whole number from ${min} to ${max}`);
+      }
+      handoff.waitMinutes = value;
+    } else {
+      throw new ApiError(400, `Unknown bot.handoff field: ${field}`);
+    }
+  }
+  return handoff;
+}
+
 // Accepts a partial bot object and returns it checked, merged over what is
 // already stored, because the purposes have to be judged as a whole: the bot
 // must be left with at least one thing to do.
@@ -285,6 +312,8 @@ function sanitizeBot(input, current) {
         throw new ApiError(400, 'bot.enquiryAlertEmail must be an email address');
       }
       bot.enquiryAlertEmail = text.toLowerCase();
+    } else if (field === 'handoff') {
+      bot.handoff = sanitizeHandoff(value, current.handoff);
     } else {
       throw new ApiError(400, `Unknown bot field: ${field}`);
     }
@@ -302,6 +331,7 @@ function presentBot(stored) {
     ...DEFAULT_BOT,
     ...bot,
     purposes: { ...DEFAULT_BOT.purposes, ...(bot.purposes || {}) },
+    handoff: { ...DEFAULT_BOT.handoff, ...(bot.handoff || {}) },
   };
 }
 

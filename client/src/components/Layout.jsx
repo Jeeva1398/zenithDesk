@@ -4,12 +4,14 @@ import Sidebar from './Sidebar';
 import ViewsPanel from './ViewsPanel';
 import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
+import { LiveChatProvider } from '../context/LiveChatContext';
 
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const onTickets = Boolean(useMatch('/tickets/*'));
 
   return (
+    <LiveChatProvider>
     <div className="min-h-screen bg-gray-50">
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
@@ -44,6 +46,7 @@ function Layout() {
         </main>
       </div>
     </div>
+    </LiveChatProvider>
   );
 }
 

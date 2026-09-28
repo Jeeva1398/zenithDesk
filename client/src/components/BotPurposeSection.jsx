@@ -131,6 +131,7 @@ function BotPurposeSection() {
     setSuccess('');
     setDraft((current) => ({ ...current, [field]: value }));
   };
+  const setHandoff = (changes) => setField('handoff', { ...draft.handoff, ...changes });
 
   const handleCopyForm = async () => {
     try {
@@ -215,6 +216,53 @@ function BotPurposeSection() {
           ))}
         </div>
         {nothingOn && <p className="mt-3 text-sm text-red-600">Turn on at least one thing for the bot to do.</p>}
+      </fieldset>
+
+      <fieldset className={`${cardClass} p-5`} disabled={disabled}>
+        <legend className="sr-only">Live chat with a person</legend>
+        <h3 className="text-base font-semibold text-gray-900">Live chat with a person</h3>
+        <p className="mt-0.5 mb-4 text-sm text-gray-500">
+          Lets a visitor ask the bot for someone from your team. The chat appears on the Live chat page, and the bot
+          only offers it while at least one agent has the portal open.
+        </p>
+        <label
+          className={`flex max-w-xl cursor-pointer gap-3 rounded-lg border p-3.5 transition ${
+            draft.handoff.enabled ? 'border-indigo-500/60 bg-indigo-50/60' : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={draft.handoff.enabled}
+            onChange={(e) => setHandoff({ enabled: e.target.checked })}
+            className="mt-0.5 size-4 shrink-0 accent-indigo-600"
+          />
+          <span>
+            <span className="block text-sm font-medium text-gray-900">Hand chats to a person</span>
+            <span className="mt-0.5 block text-xs text-gray-500">
+              Adds a &ldquo;Talk to a person&rdquo; choice, and answers requests like &ldquo;can I speak to someone?&rdquo;
+            </span>
+          </span>
+        </label>
+        {draft.handoff.enabled && (
+          <div className="mt-4 max-w-xs">
+            <label htmlFor="bot-handoff-wait" className={labelClass}>
+              Minutes to wait for someone to join
+            </label>
+            <input
+              id="bot-handoff-wait"
+              type="number"
+              min={1}
+              max={30}
+              step={1}
+              value={draft.handoff.waitMinutes}
+              onChange={(e) => setHandoff({ waitMinutes: Number(e.target.value) })}
+              className={inputClass}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              After this, the bot takes the conversation back and offers {takesTickets ? 'a ticket' : 'what else it can do'}.
+            </p>
+          </div>
+        )}
       </fieldset>
 
       {purposes.enquiry && (

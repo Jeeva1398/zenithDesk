@@ -11,6 +11,7 @@ import TicketDetailPage from './pages/TicketDetailPage';
 import CustomersPage from './pages/CustomersPage';
 import CustomerDetailPage from './pages/CustomerDetailPage';
 import EnquiriesPage from './pages/EnquiriesPage';
+import LiveChatsPage from './pages/LiveChatsPage';
 import SettingsPage from './pages/SettingsPage';
 import SearchPage from './pages/SearchPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/:id" element={<CustomerDetailPage />} />
           <Route path="/enquiries" element={<EnquiriesPage />} />
+          <Route path="/live-chats" element={<LiveChatsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/search" element={<SearchPage />} />
         </Route>

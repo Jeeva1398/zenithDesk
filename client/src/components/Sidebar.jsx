@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLiveChat } from '../context/LiveChatContext';
 import ViewsPanel from './ViewsPanel';
 import { navItemActiveClass, navItemClass, navItemDisabledClass } from '../lib/ui';
 import Logo, { LogoMark } from './Logo';
@@ -36,6 +37,12 @@ const ICONS = {
       <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
     </svg>
   ),
+  livechat: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+      <path d="M3.505 2.365A41.369 41.369 0 0 1 9 2c1.863 0 3.697.124 5.495.365 1.247.167 2.18 1.108 2.435 2.268a4.45 4.45 0 0 0-.577-.069 43.141 43.141 0 0 0-4.706 0C9.229 4.696 7.5 6.727 7.5 8.998v2.24c0 1.413.67 2.735 1.76 3.562l-2.98 2.98A.75.75 0 0 1 5 17.25v-3.443c-.501-.048-1-.106-1.495-.172C2.033 13.438 1 12.162 1 10.72V5.28c0-1.441 1.033-2.717 2.505-2.914Z" />
+      <path d="M14 6c-.762 0-1.52.02-2.271.062C10.157 6.148 9 7.472 9 8.998v2.24c0 1.519 1.147 2.839 2.71 2.935.214.013.428.024.642.034.2.009.385.09.518.224l2.35 2.35a.75.75 0 0 0 1.28-.531v-2.07c1.453-.195 2.5-1.463 2.5-2.915V8.998c0-1.526-1.157-2.85-2.729-2.936A41.645 41.645 0 0 0 14 6Z" />
+    </svg>
+  ),
   settings: (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
       <path
@@ -52,8 +59,31 @@ const NAV_ITEMS = [
   { label: 'Tickets', to: '/tickets', icon: 'tickets' },
   { label: 'Customers', to: '/customers', icon: 'customers' },
   { label: 'Enquiries', to: '/enquiries', icon: 'enquiries' },
+  // Only for an org that hands chats to people.
+  { label: 'Live chat', to: '/live-chats', icon: 'livechat', liveChat: true },
   { label: 'Settings', to: '/settings', icon: 'settings' },
 ];
+
+// The nav as this org sees it, with the number of visitors waiting on Live
+// chat.
+function useNavItems() {
+  const { counts } = useLiveChat();
+  return NAV_ITEMS.filter((item) => !item.liveChat || counts.enabled).map((item) =>
+    item.liveChat ? { ...item, badge: counts.waiting } : item,
+  );
+}
+
+function NavBadge({ count, className = '' }) {
+  if (!count) return null;
+  return (
+    <span
+      className={`flex min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-4 text-white ${className}`}
+      aria-label={`${count} waiting`}
+    >
+      {count}
+    </span>
+  );
+}
 
 function useTicketsActive() {
   return Boolean(useMatch('/tickets/*'));
@@ -83,6 +113,7 @@ function IconRail() {
   };
 
   const initial = agent?.name?.charAt(0).toUpperCase() || '?';
+  const navItems = useNavItems();
 
   return (
     <div className="flex h-full w-16 flex-col items-center border-r border-gray-200 bg-white py-4">
@@ -91,7 +122,7 @@ function IconRail() {
       </Link>
 
       <nav className="flex flex-1 flex-col items-center gap-1">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = isItemActive(item, pathname, ticketsActive, customersActive);
           if (!item.to) {
             return (
@@ -109,14 +140,15 @@ function IconRail() {
             <Link
               key={item.label}
               to={item.to}
-              title={item.label}
-              className={`flex size-10 items-center justify-center rounded-lg transition ${
+              title={item.badge ? `${item.label} (${item.badge} waiting)` : item.label}
+              className={`relative flex size-10 items-center justify-center rounded-lg transition ${
                 isActive
                   ? 'bg-indigo-50 text-indigo-700'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               {ICONS[item.icon]}
+              <NavBadge count={item.badge} className="absolute -right-0.5 -top-0.5" />
             </Link>
           );
         })}
@@ -150,6 +182,7 @@ function MobileSidebarContent() {
   };
 
   const initial = agent?.name?.charAt(0).toUpperCase() || '?';
+  const navItems = useNavItems();
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -159,7 +192,7 @@ function MobileSidebarContent() {
 
       <div className="px-3">
         <nav className="mb-4 flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             if (!item.to) {
               return (
                 <div key={item.label} className={navItemDisabledClass} aria-disabled="true">
@@ -180,6 +213,7 @@ function MobileSidebarContent() {
               >
                 {ICONS[item.icon]}
                 {item.label}
+                <NavBadge count={item.badge} className="ml-auto" />
               </Link>
             );
           })}
