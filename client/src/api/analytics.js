@@ -3,3 +3,7 @@ import request from './client';
 export function getOverview(token, days = 30) {
   return request(`/analytics/overview?days=${days}`, { token });
 }
+
+export function getChatbotOverview(token, days = 30) {
+  return request(`/analytics/chatbot?days=${days}`, { token });
+}

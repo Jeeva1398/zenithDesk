@@ -46,7 +46,7 @@ const common = {
   keyGenerator: endUserIpKey,
 };
 
-const LIVE_CHAT_PATH = /^\/live-chats(\/|$)/;
+const LIVE_CHAT_PATH = /^\/(live-chats(\/|$)|analytics\/chatbot\/events$)/;
 
 // Broad backstop against scripted traffic. Deliberately loose - an agent
 // working a ticket queue fires a lot of legitimate requests, and the tighter
@@ -56,7 +56,8 @@ const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 600,
   // Live chat is polled by both sides every few seconds for as long as it
-  // runs, which alone would use up this budget; it has its own below.
+  // runs, which alone would use up this budget; it has its own below. So do
+  // the chatbot's analytics reports, which all come from the one chat host.
   skip: (req) => LIVE_CHAT_PATH.test(req.path),
   handler: rejectWith('Too many requests - please slow down and try again shortly.'),
 });
@@ -137,9 +138,19 @@ const liveChatLimiter = rateLimit({
   handler: rejectWith('Too many requests - please slow down and try again shortly.'),
 });
 
+// The chatbot's analytics reports. Every org's come from the one chat host,
+// batched a few seconds apart per widget.
+const chatbotEventsLimiter = rateLimit({
+  ...common,
+  windowMs: 15 * 60 * 1000,
+  limit: 5000,
+  handler: rejectWith('Too many analytics reports - please slow down.'),
+});
+
 module.exports = {
   generalLimiter,
   liveChatLimiter,
+  chatbotEventsLimiter,
   widgetConfigLimiter,
   loginLimiter,
   signupLimiter,
