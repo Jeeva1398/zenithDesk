@@ -202,6 +202,11 @@ function ChatWidgetSection() {
       <div className="mb-6">
         <p className={labelClass}>Embed code</p>
         <p className="mb-2 text-xs text-gray-500">Paste this just before &lt;/body&gt; on every page that should show the chat.</p>
+        {settings.allowedDomains.length === 0 && (
+          <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">
+            Add your website under Allowed sites below and save - until then the widget won&apos;t load.
+          </p>
+        )}
         <pre className="overflow-x-auto rounded-lg bg-[#0E0B30] p-3 text-xs text-[#E4E2F5] ring-1 ring-white/10">
           <code>{snippet}</code>
         </pre>
@@ -509,9 +514,14 @@ function ChatWidgetSection() {
               className={`${inputClass} font-mono`}
             />
             <p className="text-xs text-gray-500">
-              One site per line. Leave empty to allow any site - anyone who copies the snippet
-              could then raise tickets in your organization from their own pages.
+              One site per line, as its full address. Only these sites can show your widget, so no one who
+              copies the snippet can raise tickets in your organization from their own pages.
             </p>
+            {!draft.domains.trim() && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">
+                Your widget won&apos;t load anywhere until you add at least one site here.
+              </p>
+            )}
           </fieldset>
 
           {isAdmin && (
