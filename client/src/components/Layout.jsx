@@ -38,7 +38,9 @@ function Layout() {
             </svg>
           </button>
           <SearchBar />
-          <ThemeToggle />
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1800px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
