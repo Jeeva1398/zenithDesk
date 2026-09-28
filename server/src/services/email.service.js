@@ -51,4 +51,28 @@ async function sendEnquiryAlert(to, { orgName, enquiry }) {
   });
 }
 
-module.exports = { sendOtpEmail, sendEnquiryAlert };
+// The "forgot password" link. Plain text, like the others.
+async function sendPasswordResetEmail(to, { link, minutes }) {
+  const text = [
+    'Someone asked to reset the password for your ZenithDesk account.',
+    '',
+    `Choose a new password here (the link works once, for ${minutes} minutes):`,
+    link,
+    '',
+    "If this wasn't you, ignore this email - your password stays as it is.",
+  ].join('\n');
+
+  if (!resend) {
+    logger.warn(`RESEND_API_KEY not set - logging password reset link instead of emailing ${to}: ${link}`);
+    return;
+  }
+
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL,
+    to,
+    subject: 'Reset your ZenithDesk password',
+    text,
+  });
+}
+
+module.exports = { sendOtpEmail, sendEnquiryAlert, sendPasswordResetEmail };

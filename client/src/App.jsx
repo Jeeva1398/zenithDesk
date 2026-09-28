@@ -14,6 +14,8 @@ import EnquiriesPage from './pages/EnquiriesPage';
 import LiveChatsPage from './pages/LiveChatsPage';
 import SettingsPage from './pages/SettingsPage';
 import SearchPage from './pages/SearchPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerTicketsPage from './pages/customer/CustomerTicketsPage';
 import CustomerTicketDetailPage from './pages/customer/CustomerTicketDetailPage';
@@ -23,6 +25,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>

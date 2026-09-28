@@ -20,6 +20,7 @@ const ORG_SCOPED_TABLES = new Set([
   'live_chats',
   'live_chat_messages',
   'chatbot_events',
+  'password_reset_tokens',
 ]);
 
 // A handful of queries are cross-tenant on purpose: the super-admin platform

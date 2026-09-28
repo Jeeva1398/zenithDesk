@@ -14,6 +14,15 @@ export function login({ email, password }) {
   });
 }
 
+// Always resolves the same way, whether or not the email has an account.
+export function requestPasswordReset(email) {
+  return request('/auth/forgot-password', { method: 'POST', body: { email } });
+}
+
+export function resetPassword({ token, password }) {
+  return request('/auth/reset-password', { method: 'POST', body: { token, password } });
+}
+
 export function refreshSession(refreshToken) {
   return request('/auth/refresh', {
     method: 'POST',

@@ -58,9 +58,14 @@ function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className={labelClass}>
-                Password
-              </label>
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="password" className={labelClass}>
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+                  Forgot password?
+                </Link>
+              </div>
               <PasswordInput
                 id="password"
                 placeholder="••••••••"

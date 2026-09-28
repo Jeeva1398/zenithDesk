@@ -76,6 +76,15 @@ const loginLimiter = rateLimit({
   handler: rejectWith('Too many attempts - please wait a few minutes and try again.'),
 });
 
+// Each request can send an email, so this is tight: a handful an hour per
+// person, counting successes too - a successful request is the costly one.
+const passwordResetLimiter = rateLimit({
+  ...common,
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  handler: rejectWith('Too many reset requests - please wait a while and try again.'),
+});
+
 // Signup is an abuse surface rather than a guessing one - nobody is brute
 // forcing it, but one caller shouldn't be able to spray organizations.
 // Failures here are usually validation errors, so they're counted too.
@@ -153,6 +162,7 @@ module.exports = {
   chatbotEventsLimiter,
   widgetConfigLimiter,
   loginLimiter,
+  passwordResetLimiter,
   signupLimiter,
   lookupLimiter,
   otpRequestLimiter,

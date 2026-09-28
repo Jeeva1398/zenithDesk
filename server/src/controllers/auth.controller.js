@@ -1,6 +1,7 @@
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 const authService = require('../services/auth.service');
+const passwordResetService = require('../services/passwordReset.service');
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
@@ -25,4 +26,16 @@ const logout = catchAsync(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { login, refresh, logout };
+// Always 202 with the same body, whether or not the email has an account.
+const forgotPassword = catchAsync(async (req, res) => {
+  await passwordResetService.requestReset((req.body || {}).email);
+  res.status(202).json({ message: 'If that email has an account, a reset link is on its way.' });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  const { token, password } = req.body || {};
+  await passwordResetService.resetPassword(token, password);
+  res.status(204).send();
+});
+
+module.exports = { login, refresh, logout, forgotPassword, resetPassword };
