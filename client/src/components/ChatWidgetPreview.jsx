@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { avatarFor } from './chatAvatars';
 
 // Mirrors the widget's own stacks so the preview is what a visitor will see.
 const FONT_STACKS = {
@@ -13,14 +14,37 @@ const SAMPLE_TOPICS = [
   { title: 'Report a problem', subtitle: '' },
 ];
 
-function Avatar({ theme, size = 'size-8' }) {
+// `inverted` puts a flat icon on the brand colour instead of on white, for
+// spots inside the chat rather than on the brand-coloured header.
+function Avatar({ theme, size = 'size-8', inverted = false }) {
+  const avatar = avatarFor(theme.avatar);
+  const bg = inverted ? theme.primaryColor : theme.primaryTextColor;
+  const fg = inverted ? theme.primaryTextColor : theme.primaryColor;
+  if (avatar?.kind === 'character') {
+    // On the brand-coloured header a character would blend in, so it gets a light circle.
+    return (
+      <span
+        className={`${size} shrink-0 rounded-full ${inverted ? '' : 'p-0.5'}`}
+        style={inverted ? undefined : { background: theme.primaryTextColor }}
+      >
+        <avatar.Svg base={theme.primaryColor} shadow={false} />
+      </span>
+    );
+  }
+  if (avatar) {
+    return (
+      <span className={`${size} shrink-0 overflow-hidden rounded-full`}>
+        <avatar.Svg bg={bg} fg={fg} />
+      </span>
+    );
+  }
   if (theme.logoUrl) {
     return <img src={theme.logoUrl} alt="" className={`${size} shrink-0 rounded-full bg-white object-cover`} />;
   }
   return (
     <span
       className={`${size} flex shrink-0 items-center justify-center rounded-full`}
-      style={{ background: theme.primaryTextColor, color: theme.primaryColor }}
+      style={{ background: bg, color: fg }}
     >
       <svg viewBox="0 0 24 24" fill="currentColor" className="size-1/2" aria-hidden="true">
         <path d="M12 2a1 1 0 0 1 1 1v1h4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-3.6l-3.8 3.2A1 1 0 0 1 8 20.4V18H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4V3a1 1 0 0 1 1-1Zm-3 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" />
@@ -101,15 +125,21 @@ function ChatPreview({ theme }) {
   const bubble = `${theme.bubbleRadius}px`;
   return (
     <>
-      <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2.5" style={{ color: theme.botTextColor }}>
+      <div
+        className="flex items-center gap-2 border-b border-gray-200 px-3 py-2.5"
+        style={{ color: theme.botTextColor }}
+      >
         <span className="text-gray-400">‹</span>
-        <Avatar theme={{ ...theme, primaryTextColor: theme.primaryColor, primaryColor: theme.primaryTextColor }} size="size-7" />
+        <Avatar theme={theme} size="size-7" inverted />
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
             {theme.title || 'Support'}
             <span
               className="rounded-full px-1.5 text-[9px] font-bold"
-              style={{ background: `color-mix(in srgb, ${theme.primaryColor} 15%, transparent)`, color: theme.primaryColor }}
+              style={{
+                background: `color-mix(in srgb, ${theme.primaryColor} 15%, transparent)`,
+                color: theme.primaryColor,
+              }}
             >
               AI
             </span>
@@ -128,7 +158,7 @@ function ChatPreview({ theme }) {
         </div>
         <p className="pl-8 text-[10px] font-semibold text-gray-500">{theme.title || 'Support'} · AI assistant</p>
         <div className="flex items-end gap-1.5">
-          <Avatar theme={{ ...theme, primaryTextColor: theme.primaryColor, primaryColor: theme.primaryTextColor }} size="size-6" />
+          <Avatar theme={theme} size="size-6" inverted />
           <span
             className="max-w-[80%] px-3 py-2"
             style={{ background: theme.botBubbleColor, color: theme.botTextColor, borderRadius: bubble }}
@@ -139,7 +169,9 @@ function ChatPreview({ theme }) {
         <p className="pl-8 text-[11px] text-gray-400">👍 👎 ⧉</p>
       </div>
       {theme.privacyNotice && (
-        <p className="mx-3 mb-2 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[10px] text-gray-600">ⓘ {theme.privacyNotice}</p>
+        <p className="mx-3 mb-2 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[10px] text-gray-600">
+          ⓘ {theme.privacyNotice}
+        </p>
       )}
       <div className="border-t border-gray-200 p-2.5">
         <div className="rounded-xl border border-gray-300 px-3 py-2 text-xs text-gray-400">{theme.placeholder}</div>
@@ -149,6 +181,7 @@ function ChatPreview({ theme }) {
 }
 
 function ChatWidgetPreview({ theme }) {
+  const launcherAvatar = theme.launcherIcon === 'avatar' ? avatarFor(theme.avatar) : null;
   const [view, setView] = useState('home');
   const side = theme.position === 'left' ? 'items-start' : 'items-end';
 
@@ -170,7 +203,10 @@ function ChatWidgetPreview({ theme }) {
           </button>
         ))}
       </div>
-      <div className={`flex flex-col gap-3 rounded-xl bg-gray-100 p-4 ${side}`} style={{ fontFamily: FONT_STACKS[theme.fontFamily] }}>
+      <div
+        className={`flex flex-col gap-3 rounded-xl bg-gray-100 p-4 ${side}`}
+        style={{ fontFamily: FONT_STACKS[theme.fontFamily] }}
+      >
         <div
           className="w-full max-w-[300px] overflow-hidden border border-black/5 shadow-xl"
           style={{ borderRadius: `${Math.max(theme.cornerRadius, 12)}px`, background: theme.panelBackground }}
@@ -178,16 +214,24 @@ function ChatWidgetPreview({ theme }) {
           {view === 'home' ? <HomePreview theme={theme} /> : <ChatPreview theme={theme} />}
           <PoweredBy theme={theme} />
         </div>
-        <span
-          className="flex size-12 items-center justify-center overflow-hidden rounded-full text-xl shadow-md"
-          style={{ background: theme.primaryColor, color: theme.primaryTextColor }}
-        >
-          {theme.launcherIcon === 'logo' && theme.logoUrl ? (
-            <img src={theme.logoUrl} alt="" className="size-full object-cover" />
-          ) : (
-            '⌄'
-          )}
-        </span>
+        {launcherAvatar?.kind === 'character' ? (
+          <span className="size-16">
+            <launcherAvatar.Svg base={theme.primaryColor} />
+          </span>
+        ) : (
+          <span
+            className="flex size-12 items-center justify-center overflow-hidden rounded-full text-xl shadow-md"
+            style={{ background: theme.primaryColor, color: theme.primaryTextColor }}
+          >
+            {launcherAvatar ? (
+              <launcherAvatar.Svg bg={theme.primaryColor} fg={theme.primaryTextColor} />
+            ) : theme.launcherIcon === 'logo' && theme.logoUrl ? (
+              <img src={theme.logoUrl} alt="" className="size-full object-cover" />
+            ) : (
+              '⌄'
+            )}
+          </span>
+        )}
       </div>
     </div>
   );

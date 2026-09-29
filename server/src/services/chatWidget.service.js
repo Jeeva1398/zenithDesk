@@ -20,6 +20,9 @@ const DEFAULT_THEME = {
   placeholder: 'Describe your issue...',
   greeting: '',
   logoUrl: '',
+  // The bot's picture: 'logo' shows logoUrl (or a plain bot icon without one),
+  // anything else is one of the widget's built-in avatars.
+  avatar: 'logo',
   // The widget's home screen: what it opens on before a conversation starts.
   homeTitle: 'How can we help?',
   homeSubtitle: '',
@@ -74,12 +77,16 @@ const THEME_RULES = {
   cornerRadius: { type: 'int', min: 0, max: 24 },
   bubbleRadius: { type: 'int', min: 0, max: 22 },
   position: { type: 'enum', values: ['right', 'left'] },
-  launcherIcon: { type: 'enum', values: ['chat', 'logo'] },
+  launcherIcon: { type: 'enum', values: ['chat', 'logo', 'avatar'] },
   title: { type: 'text', max: 40, required: true },
   subtitle: { type: 'text', max: 60 },
   placeholder: { type: 'text', max: 60, required: true },
   greeting: { type: 'text', max: 200 },
   logoUrl: { type: 'url', max: 500 },
+  avatar: {
+    type: 'enum',
+    values: ['logo', 'robot', 'friendly', 'headset', 'spark', 'orb', 'owl', 'buddy', 'sparky', 'nova'],
+  },
   homeTitle: { type: 'text', max: 80, required: true },
   homeSubtitle: { type: 'text', max: 140 },
   topics: { type: 'topics' },

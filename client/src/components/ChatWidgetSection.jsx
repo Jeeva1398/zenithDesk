@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
-import {
-  getChatWidgetSettings,
-  regenerateChatWidgetKey,
-  updateChatWidgetSettings,
-} from '../api/chatWidget';
+import { getChatWidgetSettings, regenerateChatWidgetKey, updateChatWidgetSettings } from '../api/chatWidget';
 import { useAuth } from '../context/AuthContext';
 import ChatWidgetPreview from './ChatWidgetPreview';
+import { AVATARS } from './chatAvatars';
 import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
 
 // Where the chatbot server serves the built widget bundle. It is also how the
@@ -34,6 +31,15 @@ const FONTS = [
   ['serif', 'Serif'],
   ['mono', 'Monospace'],
   ['rounded', 'Rounded'],
+];
+
+// The bot picture choices: the org's logo and flat icons, then the characters.
+const AVATAR_GROUPS = [
+  {
+    title: 'Logo and icons',
+    options: [{ key: 'logo', label: 'Your logo' }, ...AVATARS.filter((a) => a.kind === 'icon')],
+  },
+  { title: 'Characters', options: AVATARS.filter((a) => a.kind === 'character') },
 ];
 
 const ATTACHMENT_TYPES = [
@@ -189,19 +195,18 @@ function ChatWidgetSection() {
     <div className={`${cardClass} mb-8 p-5`}>
       <h2 className="text-base font-semibold text-gray-900">Chat widget</h2>
       <p className="mt-0.5 mb-4 text-sm text-gray-500">
-        How the support chat looks on your website, what customers can send through it, and which
-        sites may embed it.
+        How the support chat looks on your website, what customers can send through it, and which sites may embed it.
       </p>
 
       {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {success && <p className="mb-3 text-sm text-emerald-600">{success}</p>}
-      {!isAdmin && (
-        <p className="mb-3 text-sm text-gray-500">Only an admin can change the chat widget.</p>
-      )}
+      {!isAdmin && <p className="mb-3 text-sm text-gray-500">Only an admin can change the chat widget.</p>}
 
       <div className="mb-6">
         <p className={labelClass}>Embed code</p>
-        <p className="mb-2 text-xs text-gray-500">Paste this just before &lt;/body&gt; on every page that should show the chat.</p>
+        <p className="mb-2 text-xs text-gray-500">
+          Paste this just before &lt;/body&gt; on every page that should show the chat.
+        </p>
         {settings.allowedDomains.length === 0 && (
           <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">
             Add your website under Allowed sites below and save - until then the widget won&apos;t load.
@@ -253,15 +258,74 @@ function ChatWidgetSection() {
               ))}
             </div>
             <div>
-              <label className={labelClass}>Logo URL (https)</label>
-              <input
-                type="url"
-                value={theme.logoUrl}
-                onChange={(e) => setTheme('logoUrl', e.target.value)}
-                placeholder="https://example.com/logo.png"
-                className={inputClass}
-              />
+              <p className={labelClass}>Bot picture</p>
+              <p className="mb-3 text-xs text-gray-500">
+                Shown beside the bot&apos;s replies and in the widget header, all in your brand colours. A character can
+                also be the chat button on your site.
+              </p>
+              {AVATAR_GROUPS.map((group) => (
+                <div key={group.title} className="mb-3">
+                  <p className="mb-1.5 text-xs font-medium text-gray-500">{group.title}</p>
+                  <div role="radiogroup" aria-label={group.title} className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                    {group.options.map((option) => {
+                      const selected = theme.avatar === option.key;
+                      const character = option.kind === 'character';
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          title={option.label}
+                          onClick={() => {
+                            setTheme('avatar', option.key);
+                            // A character is meant to be seen on the page, so it becomes the chat
+                            // button too; the logo leaves an avatar launcher with nothing to show.
+                            if (character) setTheme('launcherIcon', 'avatar');
+                            else if (option.key === 'logo' && theme.launcherIcon === 'avatar') {
+                              setTheme('launcherIcon', 'chat');
+                            }
+                          }}
+                          className={`flex flex-col items-center gap-1.5 rounded-lg border p-2 text-[11px] font-medium transition ${
+                            selected
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={character ? 'size-12' : 'size-10 overflow-hidden rounded-full'}>
+                            {character ? (
+                              <option.Svg base={theme.primaryColor} shadow={false} />
+                            ) : option.Svg ? (
+                              <option.Svg bg={theme.primaryColor} fg={theme.primaryTextColor} />
+                            ) : theme.logoUrl ? (
+                              <img src={theme.logoUrl} alt="" className="size-full bg-white object-cover" />
+                            ) : (
+                              <span className="flex size-full items-center justify-center rounded-full border border-dashed border-gray-300 text-[10px] text-gray-400">
+                                Logo
+                              </span>
+                            )}
+                          </span>
+                          <span className="w-full truncate text-center">{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+            {theme.avatar === 'logo' && (
+              <div>
+                <label className={labelClass}>Logo URL (https)</label>
+                <input
+                  type="url"
+                  value={theme.logoUrl}
+                  onChange={(e) => setTheme('logoUrl', e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-gray-400">Without a logo, the bot shows a plain bot icon.</p>
+              </div>
+            )}
           </fieldset>
 
           <fieldset disabled={disabled} className="flex flex-col gap-4">
@@ -302,6 +366,11 @@ function ChatWidgetSection() {
                   <option value="chat">Chat bubble</option>
                   <option value="logo" disabled={!theme.logoUrl}>
                     Your logo
+                  </option>
+                  <option value="avatar" disabled={theme.avatar === 'logo'}>
+                    {AVATARS.find((a) => a.key === theme.avatar)?.kind === 'character'
+                      ? 'Your character'
+                      : 'Bot avatar'}
                   </option>
                 </select>
               </div>
@@ -514,8 +583,8 @@ function ChatWidgetSection() {
               className={`${inputClass} font-mono`}
             />
             <p className="text-xs text-gray-500">
-              One site per line, as its full address. Only these sites can show your widget, so no one who
-              copies the snippet can raise tickets in your organization from their own pages.
+              One site per line, as its full address. Only these sites can show your widget, so no one who copies the
+              snippet can raise tickets in your organization from their own pages.
             </p>
             {!draft.domains.trim() && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">

@@ -69,6 +69,28 @@ test.describe('chat widget settings', () => {
     expect(updated.theme.placeholder).toBe(before.theme.placeholder);
   });
 
+  test('the bot can wear a built-in avatar, on the launcher too, and it is served publicly', async ({
+    request,
+  }) => {
+    const org = await createOrg(request);
+    expect((await settings(request, org.token)).theme.avatar).toBe('logo');
+
+    const res = await patch(request, org.token, { theme: { avatar: 'owl', launcherIcon: 'avatar' } });
+    expect(res.status()).toBe(200);
+    const updated = await res.json();
+    expect(updated.theme).toMatchObject({ avatar: 'owl', launcherIcon: 'avatar' });
+
+    const pub = await (await request.get(`${API_URL}/chat-widget/public/${updated.publicKey}`)).json();
+    expect(pub.theme).toMatchObject({ avatar: 'owl', launcherIcon: 'avatar' });
+
+    // A character, which the widget can stand on its own as the launcher.
+    const character = await patch(request, org.token, { theme: { avatar: 'buddy' } });
+    expect((await character.json()).theme).toMatchObject({ avatar: 'buddy', launcherIcon: 'avatar' });
+
+    expect((await patch(request, org.token, { theme: { avatar: 'dragon' } })).status()).toBe(400);
+    expect((await patch(request, org.token, { theme: { avatar: '<svg onload=alert(1)>' } })).status()).toBe(400);
+  });
+
   test('values that would land unchecked on a customer site are refused', async ({ request }) => {
     const org = await createOrg(request);
 
