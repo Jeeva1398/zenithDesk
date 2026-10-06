@@ -16,6 +16,7 @@ const ORG_SCOPED_TABLES = new Set([
   'chat_widget_settings',
   'ticket_attachments',
   'kb_articles',
+  'kb_passage_embeddings',
   'enquiries',
   'live_chats',
   'live_chat_messages',

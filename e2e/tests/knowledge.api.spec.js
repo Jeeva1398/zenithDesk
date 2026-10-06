@@ -180,4 +180,42 @@ test.describe('knowledge ranking', () => {
     expect(passages.length).toBeGreaterThan(1);
     expect(passages.every((p) => p.title === 'Big guide' && p.text.length <= 1200)).toBe(true);
   });
+
+  // Hand-made unit vectors stand in for a model: what is under test is how
+  // the two rankings are combined, not the model.
+  function withVectors(articles, vectors) {
+    const index = kbSearch.buildIndex(articles);
+    index.passages.forEach((p, i) => {
+      p.vector = Float32Array.from(vectors[i]);
+    });
+    return index;
+  }
+  const REFUND = { id: 1, title: 'Refunds', body: 'Duplicate charges are refunded within 5 business days.' };
+  const EXPORT = { id: 2, title: 'Exporting reports', body: 'Open Reports and press Export to get a CSV file.' };
+
+  test('a question with no shared words is found by meaning', () => {
+    const index = withVectors([REFUND, EXPORT], [[1, 0], [0, 1]]);
+    const results = kbSearch.search(index, 'money taken two times', { queryVector: Float32Array.from([0.8, 0.6]) });
+    expect(results.map((r) => r.articleId)).toEqual([1]);
+    expect(results[0]).toMatchObject({ score: 0, coverage: 0, similarity: 0.8 });
+  });
+
+  test('a passage similar by meaning but far below the best one is left out', () => {
+    const index = withVectors([REFUND, EXPORT], [[1, 0], [0.6, 0.8]]);
+    const results = kbSearch.search(index, 'money taken two times', { queryVector: Float32Array.from([1, 0]) });
+    expect(results.map((r) => r.articleId)).toEqual([1]);
+  });
+
+  test('a match by both keywords and meaning outranks a match by one', () => {
+    const index = withVectors([REFUND, EXPORT], [[0.6, 0.8], [1, 0]]);
+    const results = kbSearch.search(index, 'export my reports', { queryVector: Float32Array.from([0.6, 0.8]) });
+    expect(results[0].articleId).toBe(2);
+  });
+
+  test('without vectors the ranking is keywords alone', () => {
+    const index = kbSearch.buildIndex([REFUND, EXPORT]);
+    const results = kbSearch.search(index, 'export reports');
+    expect(results.map((r) => r.articleId)).toEqual([2]);
+    expect(results[0].similarity).toBeNull();
+  });
 });

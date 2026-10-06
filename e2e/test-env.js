@@ -44,6 +44,10 @@ function serverEnv(dbName = TEST_DB_NAME) {
     TRUSTED_SERVICE_IPS,
     TRUST_PROXY_HOPS: '0',
     UPLOAD_DIR,
+    // Keyword ranking only, so results do not depend on whether this machine
+    // runs Ollama; the ranking by meaning is tested on kbSearch directly.
+    // E2E_EMBED_MODEL=nomic-embed-text runs the suite against the real thing.
+    EMBED_MODEL: process.env.E2E_EMBED_MODEL || 'none',
   };
 }
 

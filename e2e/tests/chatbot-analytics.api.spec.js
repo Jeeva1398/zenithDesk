@@ -100,6 +100,24 @@ test.describe('chatbot analytics', () => {
     expect(data.knowledgeGaps[0].question.toLowerCase()).toBe('why was i charged twice?');
   });
 
+  test('a missed question shows the article written for it since', async ({ request }) => {
+    const { org, key } = await orgWithKey(request);
+    const missed = [{ sessionId: unique('s'), type: 'kb_no_answer', detail: 'How do I export my invoices?' }];
+    expect((await report(request, key, missed)).status()).toBe(201);
+
+    let [gap] = (await overview(request, org)).knowledgeGaps;
+    expect(gap.coveredBy).toBeNull();
+
+    const created = await request.post(`${API_URL}/knowledge/articles`, {
+      headers: auth(org.token),
+      data: { title: 'Exporting invoices', body: 'Open Billing and press Export invoices to download them as a PDF.' },
+    });
+    expect(created.status()).toBe(201);
+
+    [gap] = (await overview(request, org)).knowledgeGaps;
+    expect(gap.coveredBy).toEqual({ id: (await created.json()).id, title: 'Exporting invoices' });
+  });
+
   test('counts live chats from its own records', async ({ request }) => {
     const { org, key } = await orgWithKey(request);
     await request.patch(`${API_URL}/chat-widget`, {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   createArticle,
   deleteArticle,
@@ -61,7 +62,11 @@ function SearchPreview({ token }) {
             results.map((r) => (
               <div key={`${r.articleId}-${r.text.slice(0, 20)}`} className="rounded-lg bg-gray-50 px-3 py-2 text-sm">
                 <p className="font-medium text-gray-900">
-                  {r.title} <span className="font-normal text-gray-400">· score {r.score}</span>
+                  {r.title}{' '}
+                  <span className="font-normal text-gray-400">
+                    · keywords {r.score}
+                    {r.similarity !== null && r.similarity !== undefined && ` · meaning ${r.similarity}`}
+                  </span>
                 </p>
                 <p className="mt-0.5 text-gray-600">{excerpt(r.text, 200)}</p>
               </div>
@@ -84,6 +89,7 @@ function KnowledgeSection() {
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [params, setParams] = useSearchParams();
 
   const load = async () => {
     setLoading(true);
@@ -102,11 +108,28 @@ function KnowledgeSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openCreate = () => {
+  const openCreate = (title = '') => {
     setEditing('new');
-    setForm(emptyForm);
+    setForm({ ...emptyForm, title });
     setFormError('');
   };
+
+  // Arriving from a question the chatbot missed: the editor opens with that
+  // question as the title, and the link is not left to reopen it on reload.
+  const draft = params.get('draft');
+  useEffect(() => {
+    if (draft === null) return;
+    if (isAdmin) openCreate(draft.slice(0, 200));
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('draft');
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
   const openEdit = (article) => {
     setEditing(article);
@@ -155,7 +178,7 @@ function KnowledgeSection() {
           </p>
         </div>
         {isAdmin && (
-          <button type="button" onClick={openCreate} className={primaryButtonClass}>
+          <button type="button" onClick={() => openCreate()} className={primaryButtonClass}>
             Add article
           </button>
         )}

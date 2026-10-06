@@ -1,5 +1,6 @@
 const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
+const knowledgeService = require('./knowledge.service');
 
 // The Chatbot tab on the dashboard. The chat server reports what happens in
 // its conversations as events; live chats are this app's own records. Read
@@ -130,7 +131,7 @@ async function getOverview(orgId, days) {
   // helping: what is worth writing an article about.
   const gaps = await db.sql(
     `SELECT MAX(e.detail) AS question, COUNT(*) AS n,
-       SUM(e.type = 'kb_no_answer') AS unanswered
+       SUM(e.type = 'kb_no_answer') AS unanswered, MAX(e.created_at) AS last_asked
      FROM chatbot_events e
      WHERE e.org_id = :orgId AND e.detail IS NOT NULL AND e.created_at >= ${since}
        AND (e.type = 'kb_no_answer' OR (e.type = 'kb_answered' AND EXISTS (
@@ -148,6 +149,13 @@ async function getOverview(orgId, days) {
             WHERE m.org_id = c.org_id AND m.live_chat_id = c.id AND m.event = 'joined')) AS wait_seconds
      FROM live_chats c WHERE c.org_id = :orgId AND c.created_at >= ${since}`,
     [back],
+  );
+
+  // Whether an article written since a question was last asked now covers
+  // it. Worked out per question with the chatbot's own search; a failure
+  // costs only the hint, never the dashboard.
+  const newerArticles = await Promise.all(
+    gaps.map((row) => knowledgeService.newerArticleFor(orgId, row.question, row.last_asked).catch(() => null)),
   );
 
   const kbAnswered = count.kb_answered || 0;
@@ -176,10 +184,12 @@ async function getOverview(orgId, days) {
       avgWaitSeconds: liveRow.wait_seconds === null ? null : Number(liveRow.wait_seconds),
     },
     trend: fillDays(trend, days),
-    knowledgeGaps: gaps.map((row) => ({
+    knowledgeGaps: gaps.map((row, i) => ({
       question: row.question,
       count: Number(row.n),
       unanswered: Number(row.unanswered),
+      lastAsked: row.last_asked,
+      coveredBy: newerArticles[i],
     })),
   };
 }
