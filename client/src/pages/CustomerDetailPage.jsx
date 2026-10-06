@@ -8,7 +8,8 @@ import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonC
 
 function CustomerDetailPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, hasProduct } = useAuth();
+  const hasDesk = hasProduct('desk');
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,41 +138,43 @@ function CustomerDetailPage() {
         )}
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-4 text-base font-semibold text-gray-900">
-          Tickets {customer.tickets.length > 0 && `(${customer.tickets.length})`}
-        </h2>
+      {hasDesk && (
+        <div className="mt-8">
+          <h2 className="mb-4 text-base font-semibold text-gray-900">
+            Tickets {customer.tickets.length > 0 && `(${customer.tickets.length})`}
+          </h2>
 
-        {customer.tickets.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
-            This customer hasn&apos;t submitted any tickets.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {customer.tickets.map((ticket) => (
-              <Link
-                key={ticket.id}
-                to={`/tickets/${ticket.id}`}
-                className={`${cardClass} flex items-center justify-between gap-4 p-4 transition hover:border-gray-300`}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900">{ticket.subject}</p>
-                  <p className="mt-0.5 text-xs text-gray-400">
-                    Ticket #{ticket.id} · {new Date(ticket.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge type="priority" value={ticket.priority} />
-                  <Badge type="status" value={ticket.status} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+          {customer.tickets.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500">
+              This customer hasn&apos;t submitted any tickets.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {customer.tickets.map((ticket) => (
+                <Link
+                  key={ticket.id}
+                  to={`/tickets/${ticket.id}`}
+                  className={`${cardClass} flex items-center justify-between gap-4 p-4 transition hover:border-gray-300`}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-900">{ticket.subject}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      Ticket #{ticket.id} · {new Date(ticket.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge type="priority" value={ticket.priority} />
+                    <Badge type="status" value={ticket.status} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showEdit && (
-        <Modal title="Edit customer" onClose={() => setShowEdit(false)}>
+        <Modal title={hasDesk ? 'Edit customer' : 'Edit contact'} onClose={() => setShowEdit(false)}>
           <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Name</label>

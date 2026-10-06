@@ -6,7 +6,7 @@ import Badge from '../components/Badge';
 import { cardClass } from '../lib/ui';
 
 function SearchPage() {
-  const { token } = useAuth();
+  const { token, hasProduct } = useAuth();
   const [params] = useSearchParams();
   const query = params.get('q') || '';
 
@@ -105,7 +105,7 @@ function SearchPage() {
         <div className={`${cardClass} overflow-hidden`}>
           <div className="border-b border-gray-200 bg-gray-50 px-5 py-3">
             <h2 className="text-sm font-semibold text-gray-900">
-              Customers ({results.customers.length})
+              {hasProduct('desk') ? 'Customers' : 'Contacts'} ({results.customers.length})
             </h2>
           </div>
           <table className="w-full text-left text-sm">

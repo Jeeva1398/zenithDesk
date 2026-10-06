@@ -480,6 +480,7 @@ const TABS = [
   },
   {
     key: 'macros',
+    product: 'desk',
     label: 'Macros',
     description: 'Canned replies and bulk actions',
     icon: 'M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z',
@@ -487,6 +488,7 @@ const TABS = [
   },
   {
     key: 'sla',
+    product: 'desk',
     label: 'SLA',
     description: 'Response and resolution targets',
     icon: 'M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z',
@@ -494,6 +496,7 @@ const TABS = [
   },
   {
     key: 'chatbot',
+    product: 'chat',
     label: 'Chatbot',
     description: 'What the chat bot does: enquiries, support, or both',
     icon: 'M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238 1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192-.238a1 1 0 0 0 0-1.962l-1.192-.238a1 1 0 0 1-.785-.785l-.238-1.192ZM6.949 5.684a1 1 0 0 0-1.898 0l-.683 2.051a1 1 0 0 1-.633.633l-2.051.683a1 1 0 0 0 0 1.898l2.051.684a1 1 0 0 1 .633.632l.683 2.051a1 1 0 0 0 1.898 0l.683-2.051a1 1 0 0 1 .633-.633l2.051-.683a1 1 0 0 0 0-1.898l-2.051-.683a1 1 0 0 1-.633-.633L6.95 5.684ZM13.949 13.684a1 1 0 0 0-1.898 0l-.184.551a1 1 0 0 1-.632.633l-.551.183a1 1 0 0 0 0 1.898l.551.183a1 1 0 0 1 .633.633l.183.551a1 1 0 0 0 1.898 0l.184-.551a1 1 0 0 1 .632-.633l.551-.183a1 1 0 0 0 0-1.898l-.551-.184a1 1 0 0 1-.633-.632l-.183-.551Z',
@@ -501,6 +504,7 @@ const TABS = [
   },
   {
     key: 'chat-widget',
+    product: 'chat',
     label: 'Chat widget',
     description: 'Look, behavior and allowed sites',
     icon: 'M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902.848.137 1.705.248 2.57.331v3.443a.75.75 0 0 0 1.28.53l3.58-3.579a.78.78 0 0 1 .527-.224 41.202 41.202 0 0 0 5.183-.5c1.437-.232 2.43-1.49 2.43-2.903V5.426c0-1.413-.993-2.67-2.43-2.902A41.289 41.289 0 0 0 10 2Z',
@@ -516,11 +520,12 @@ const TABS = [
 ];
 
 function SettingsPage() {
-  const { agent } = useAuth();
+  const { agent, hasProduct } = useAuth();
   const [params, setParams] = useSearchParams();
-  const active = TABS.find((t) => t.key === params.get('tab')) || TABS[0];
+  const tabs = TABS.filter((t) => !t.product || hasProduct(t.product));
+  const active = tabs.find((t) => t.key === params.get('tab')) || tabs[0];
 
-  const selectTab = (key) => setParams(key === TABS[0].key ? {} : { tab: key }, { replace: true });
+  const selectTab = (key) => setParams(key === tabs[0].key ? {} : { tab: key }, { replace: true });
 
   return (
     <div>
@@ -542,7 +547,7 @@ function SettingsPage() {
           aria-orientation="vertical"
           className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:sticky lg:top-6 lg:mx-0 lg:w-56 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
         >
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const selected = tab.key === active.key;
             return (
               <button

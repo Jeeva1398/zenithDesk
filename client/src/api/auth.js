@@ -1,9 +1,10 @@
 import request from './client';
 
-export function signup({ orgName, adminName, adminEmail, adminPassword }) {
+// products is optional: left out, the org gets both.
+export function signup({ orgName, adminName, adminEmail, adminPassword, products }) {
   return request('/organizations/signup', {
     method: 'POST',
-    body: { orgName, adminName, adminEmail, adminPassword },
+    body: { orgName, adminName, adminEmail, adminPassword, products },
   });
 }
 

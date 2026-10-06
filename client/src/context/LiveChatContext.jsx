@@ -11,17 +11,22 @@ const EMPTY = { enabled: false, waiting: 0, active: 0, online: 0 };
 const LiveChatContext = createContext({ counts: EMPTY, refresh: () => {} });
 
 export function LiveChatProvider({ children }) {
-  const { token } = useAuth();
+  const { token, hasProduct } = useAuth();
   const [counts, setCounts] = useState(EMPTY);
+  // Live chat is Chat's; an org without it has nothing to poll.
+  const hasChat = hasProduct('chat');
 
   const refresh = useCallback(() => {
-    if (!token) return;
+    if (!token || !hasChat) {
+      setCounts(EMPTY);
+      return;
+    }
     getLiveChatCounts(token)
       .then(setCounts)
       .catch(() => {
         // Left as it was; the next check tries again.
       });
-  }, [token]);
+  }, [token, hasChat]);
 
   useEffect(() => {
     refresh();

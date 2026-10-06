@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { onUnauthorized, setRefreshHandler } from '../api/client';
 import { logoutSession, refreshSession } from '../api/auth';
+import { getMyOrganization } from '../api/organizations';
+import { productsOf } from '../lib/products';
 
 const AuthContext = createContext(null);
 
@@ -84,17 +86,41 @@ export function AuthProvider({ children }) {
     });
   };
 
-  const value = useMemo(
-    () => ({
+  // Re-reads the org's name and products: once per page load, since another
+  // admin may have turned a product on, and after this one does. Only the
+  // latest read is kept - a slow one from before a product was turned on must
+  // not arrive last and take it away again.
+  const orgReads = useRef(0);
+  const refreshOrganization = async () => {
+    if (!tokenRef.current) return;
+    orgReads.current += 1;
+    const read = orgReads.current;
+    const org = await getMyOrganization(tokenRef.current);
+    if (read === orgReads.current) {
+      updateAgent({ orgName: org.name, products: org.products });
+    }
+  };
+
+  const signedIn = Boolean(auth?.token);
+  useEffect(() => {
+    if (signedIn) refreshOrganization().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn]);
+
+  const value = useMemo(() => {
+    const products = productsOf(auth?.agent);
+    return {
       token: auth?.token ?? null,
       agent: auth?.agent ?? null,
       isAuthenticated: Boolean(auth?.token),
+      products,
+      hasProduct: (product) => products.includes(product),
       login,
       logout,
       updateAgent,
-    }),
-    [auth],
-  );
+      refreshOrganization,
+    };
+  }, [auth]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

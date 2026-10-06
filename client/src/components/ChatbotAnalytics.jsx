@@ -42,7 +42,9 @@ function Figure({ label, value, hint }) {
 // own, what it passed to the team, and what visitors asked that the knowledge
 // base could not answer.
 function ChatbotAnalytics({ days }) {
-  const { token } = useAuth();
+  const { token, hasProduct } = useAuth();
+  // Without Desk the bot raises no tickets, so they are left out of the numbers.
+  const hasDesk = hasProduct('desk');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,7 +82,11 @@ function ChatbotAnalytics({ days }) {
             value={totals ? percent(totals.handledByBotRate) : null}
             tone="emerald"
           />
-          <StatCard label="Tickets raised" value={totals ? totals.tickets : null} tone="amber" />
+          {hasDesk ? (
+            <StatCard label="Tickets raised" value={totals ? totals.tickets : null} tone="amber" />
+          ) : (
+            <StatCard label="Enquiries taken" value={totals ? totals.enquiries : null} tone="amber" />
+          )}
           <StatCard
             label="Replies rated helpful"
             value={data ? percent(data.ratings.satisfaction) : null}
@@ -102,7 +108,7 @@ function ChatbotAnalytics({ days }) {
                   },
                   {
                     key: 'escalated',
-                    label: 'To a ticket or person',
+                    label: hasDesk ? 'To a ticket or person' : 'To a person',
                     color: '#d97706',
                   },
                 ]}
@@ -116,7 +122,7 @@ function ChatbotAnalytics({ days }) {
               <BarList
                 data={[
                   { label: 'Settled by the bot', value: totals.handledByBot },
-                  { label: 'Tickets', value: totals.tickets },
+                  ...(hasDesk ? [{ label: 'Tickets', value: totals.tickets }] : []),
                   { label: 'Asked for a person', value: totals.handoffs },
                   { label: 'Enquiries', value: totals.enquiries },
                 ]}

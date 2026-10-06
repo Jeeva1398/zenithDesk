@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import RequireProduct, { HomeRedirect } from './components/RequireProduct';
 import CustomerLayout from './components/CustomerLayout';
 import CustomerProtectedRoute from './components/CustomerProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -14,6 +15,7 @@ import EnquiriesPage from './pages/EnquiriesPage';
 import LiveChatsPage from './pages/LiveChatsPage';
 import SettingsPage from './pages/SettingsPage';
 import SearchPage from './pages/SearchPage';
+import ProductPage from './pages/ProductPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
@@ -31,14 +33,19 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/tickets" element={<TicketsPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route element={<RequireProduct product="desk" />}>
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          </Route>
+          <Route element={<RequireProduct product="chat" />}>
+            <Route path="/enquiries" element={<EnquiriesPage />} />
+            <Route path="/live-chats" element={<LiveChatsPage />} />
+          </Route>
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/:id" element={<CustomerDetailPage />} />
-          <Route path="/enquiries" element={<EnquiriesPage />} />
-          <Route path="/live-chats" element={<LiveChatsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/products/:product" element={<ProductPage />} />
         </Route>
       </Route>
 
@@ -50,7 +57,7 @@ function App() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/tickets" replace />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 }
