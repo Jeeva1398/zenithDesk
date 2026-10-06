@@ -1,6 +1,7 @@
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 const customerAuthService = require('../services/customerAuth.service');
+const productService = require('../services/product.service');
 
 const resolveOrg = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -18,6 +19,8 @@ const requestOtp = catchAsync(async (req, res) => {
     throw new ApiError(400, 'orgId and email are required');
   }
 
+  // Signing in shows a customer their tickets, which only Desk has.
+  await productService.assertHas(orgId, 'desk');
   await customerAuthService.requestOtp(orgId, email);
   res.status(200).json({ message: 'If that email has an account, a verification code has been sent.' });
 });
@@ -28,6 +31,7 @@ const verifyOtp = catchAsync(async (req, res) => {
     throw new ApiError(400, 'orgId, email, and code are required');
   }
 
+  await productService.assertHas(orgId, 'desk');
   const token = await customerAuthService.verifyOtp(orgId, email, code);
   res.status(200).json({ token });
 });

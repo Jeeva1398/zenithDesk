@@ -4,6 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { comparePassword } = require('../utils/password');
 const { signToken, TOKEN_TYPES } = require('../utils/token');
 const refreshTokenService = require('./refreshToken.service');
+const productService = require('./product.service');
 
 async function login({ email, password }) {
   const [rows] = await pool.query(
@@ -43,6 +44,7 @@ async function login({ email, password }) {
       name: agent.name,
       email: agent.email,
       role: agent.role,
+      products: await productService.listForOrg(agent.org_id),
     },
   };
 }
@@ -85,6 +87,7 @@ async function refresh(token) {
       name: agent.name,
       email: agent.email,
       role: agent.role,
+      products: await productService.listForOrg(agent.org_id),
     },
   };
 }

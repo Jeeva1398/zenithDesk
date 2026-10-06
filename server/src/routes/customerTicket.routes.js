@@ -1,10 +1,11 @@
 const express = require('express');
 const authenticateCustomer = require('../middlewares/authenticateCustomer');
 const customerTicketController = require('../controllers/customerTicket.controller');
+const requireProduct = require('../middlewares/requireProduct');
 
 const router = express.Router();
 
-router.use(authenticateCustomer);
+router.use(authenticateCustomer, requireProduct('desk'));
 
 router.get('/tickets', customerTicketController.listMyTickets);
 router.post('/tickets', customerTicketController.createMyTicket);

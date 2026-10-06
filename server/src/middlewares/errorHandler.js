@@ -27,7 +27,7 @@ function errorHandler(err, req, res, next) {
     logger.warn(`${req.method} ${req.originalUrl} → ${statusCode}: ${err.message}`);
   }
 
-  res.status(statusCode).json({ error: message });
+  res.status(statusCode).json(err.isOperational && err.code ? { error: message, code: err.code } : { error: message });
 }
 
 module.exports = errorHandler;

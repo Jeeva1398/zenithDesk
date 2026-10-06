@@ -1,5 +1,6 @@
 const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
+const productService = require('./product.service');
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_QUERY_LENGTH = 100;
@@ -91,8 +92,9 @@ async function search(orgId, { q, limit } = {}) {
   const capped = clampLimit(limit);
   const db = forOrg(orgId);
 
+  // Customers are shared; tickets are Desk's, so an org without it finds none.
   const [tickets, customers] = await Promise.all([
-    searchTickets(db, query, capped),
+    (await productService.has(orgId, 'desk')) ? searchTickets(db, query, capped) : [],
     searchCustomers(db, query, capped),
   ]);
 
