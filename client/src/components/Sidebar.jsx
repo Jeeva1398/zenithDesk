@@ -5,6 +5,7 @@ import { useLiveChat } from '../context/LiveChatContext';
 import ViewsPanel from './ViewsPanel';
 import { navItemActiveClass, navItemClass, navItemDisabledClass } from '../lib/ui';
 import Logo, { LogoMark } from './Logo';
+import { homePath } from '../lib/products';
 
 const ICONS = {
   dashboard: (
@@ -54,22 +55,29 @@ const ICONS = {
   ),
 };
 
+// product marks what belongs to Desk or Chat; the rest is shared.
 const NAV_ITEMS = [
   { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
-  { label: 'Tickets', to: '/tickets', icon: 'tickets' },
+  { label: 'Tickets', to: '/tickets', icon: 'tickets', product: 'desk' },
   { label: 'Customers', to: '/customers', icon: 'customers' },
-  { label: 'Enquiries', to: '/enquiries', icon: 'enquiries' },
+  { label: 'Enquiries', to: '/enquiries', icon: 'enquiries', product: 'chat' },
   // Only for an org that hands chats to people.
-  { label: 'Live chat', to: '/live-chats', icon: 'livechat', liveChat: true },
+  { label: 'Live chat', to: '/live-chats', icon: 'livechat', product: 'chat', liveChat: true },
   { label: 'Settings', to: '/settings', icon: 'settings' },
 ];
 
 // The nav as this org sees it, with the number of visitors waiting on Live
-// chat.
+// chat. Without Desk there are no ticket customers, so the shared page is
+// the org's contacts.
 function useNavItems() {
   const { counts } = useLiveChat();
-  return NAV_ITEMS.filter((item) => !item.liveChat || counts.enabled).map((item) =>
-    item.liveChat ? { ...item, badge: counts.waiting } : item,
+  const { hasProduct } = useAuth();
+  return NAV_ITEMS.filter((item) => (!item.product || hasProduct(item.product)) && (!item.liveChat || counts.enabled)).map(
+    (item) => {
+      if (item.liveChat) return { ...item, badge: counts.waiting };
+      if (item.to === '/customers' && !hasProduct('desk')) return { ...item, label: 'Contacts' };
+      return item;
+    },
   );
 }
 
@@ -104,7 +112,7 @@ function IconRail() {
   const ticketsActive = useTicketsActive();
   const customersActive = useCustomersActive();
   const { pathname } = useLocation();
-  const { agent, logout } = useAuth();
+  const { agent, logout, products } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -117,7 +125,7 @@ function IconRail() {
 
   return (
     <div className="flex h-full w-16 flex-col items-center border-r border-gray-200 bg-white py-4">
-      <Link to="/tickets" className="mb-6" aria-label="ZenithDesk home">
+      <Link to={homePath(products)} className="mb-6" aria-label="ZenithDesk home">
         <LogoMark className="size-9 drop-shadow-sm" />
       </Link>
 
@@ -173,7 +181,7 @@ function MobileSidebarContent() {
   const ticketsActive = useTicketsActive();
   const customersActive = useCustomersActive();
   const { pathname } = useLocation();
-  const { agent, logout } = useAuth();
+  const { agent, logout, products } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -221,7 +229,7 @@ function MobileSidebarContent() {
       </div>
 
       <div className="flex-1 overflow-y-auto border-t border-gray-100">
-        <ViewsPanel />
+        {products.includes('desk') && <ViewsPanel />}
       </div>
 
       {agent && (

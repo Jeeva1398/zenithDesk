@@ -18,11 +18,13 @@ const RANGE_OPTIONS = [
 const VIEWS = [
   {
     key: 'tickets',
+    product: 'desk',
     label: 'Tickets',
     subtitle: 'Ticket volume and performance trends',
   },
   {
     key: 'chatbot',
+    product: 'chat',
     label: 'Chatbot',
     subtitle: 'What the chat widget handled, and what it passed to the team',
   },
@@ -35,9 +37,10 @@ function formatHours(hours) {
 }
 
 function DashboardPage() {
-  const { token } = useAuth();
+  const { token, hasProduct } = useAuth();
   const [params, setParams] = useSearchParams();
-  const view = VIEWS.find((v) => v.key === params.get('view')) || VIEWS[0];
+  const views = VIEWS.filter((v) => hasProduct(v.product));
+  const view = views.find((v) => v.key === params.get('view')) || views[0] || VIEWS[0];
   const [days, setDays] = useState(30);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +68,7 @@ function DashboardPage() {
 
   const selectView = (key) => {
     const next = new URLSearchParams(params);
-    if (key === VIEWS[0].key) next.delete('view');
+    if (key === views[0].key) next.delete('view');
     else next.set('view', key);
     setParams(next, { replace: true });
   };
@@ -78,22 +81,24 @@ function DashboardPage() {
           <p className="mt-1 text-sm text-gray-500">{view.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div role="tablist" aria-label="Dashboard view" className="inline-flex rounded-lg bg-gray-100 p-1">
-            {VIEWS.map((v) => (
-              <button
-                key={v.key}
-                type="button"
-                role="tab"
-                aria-selected={v.key === view.key}
-                onClick={() => selectView(v.key)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                  v.key === view.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
+          {views.length > 1 && (
+            <div role="tablist" aria-label="Dashboard view" className="inline-flex rounded-lg bg-gray-100 p-1">
+              {views.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={v.key === view.key}
+                  onClick={() => selectView(v.key)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                    v.key === view.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}

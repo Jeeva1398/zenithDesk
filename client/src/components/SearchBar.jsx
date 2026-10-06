@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 // Submits to /search rather than searching as you type: results are a page an
 // agent can link to and come back to, and it keeps one request per intent
 // instead of one per keystroke.
 function SearchBar() {
+  const hasDesk = useAuth().hasProduct('desk');
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [term, setTerm] = useState(params.get('q') || '');
@@ -27,7 +29,7 @@ function SearchBar() {
     // full width; the space to its right stays empty.
     <form onSubmit={handleSubmit} className="relative w-full max-w-md" role="search">
       <label className="sr-only" htmlFor="global-search">
-        Search tickets and customers
+        {hasDesk ? 'Search tickets and customers' : 'Search contacts'}
       </label>
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +49,7 @@ function SearchBar() {
         type="search"
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        placeholder="Search tickets, customers, tags or #id"
+        placeholder={hasDesk ? 'Search tickets, customers, tags or #id' : 'Search contacts by name or email'}
         className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
       />
     </form>

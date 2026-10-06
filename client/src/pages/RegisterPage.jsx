@@ -36,7 +36,7 @@ function RegisterPage() {
         adminPassword: password,
       });
       login(data);
-      navigate('/tickets');
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {

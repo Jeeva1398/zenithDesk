@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import ViewsPanel from './ViewsPanel';
 import SearchBar from './SearchBar';
 import ThemeToggle from './ThemeToggle';
+import AppSwitcher from './AppSwitcher';
 import { LiveChatProvider } from '../context/LiveChatContext';
 
 function Layout() {
@@ -38,7 +39,8 @@ function Layout() {
             </svg>
           </button>
           <SearchBar />
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <AppSwitcher />
             <ThemeToggle />
           </div>
         </header>

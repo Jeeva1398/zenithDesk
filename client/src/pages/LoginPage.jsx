@@ -22,7 +22,7 @@ function LoginPage() {
     try {
       const data = await loginRequest({ email, password });
       login(data);
-      navigate('/tickets');
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
