@@ -3,6 +3,7 @@ const { URL } = require('url');
 const pool = require('../db/connection');
 const { forOrg } = require('../db/orgScope');
 const ApiError = require('../utils/ApiError');
+const productService = require('./product.service');
 
 const DEFAULT_THEME = {
   primaryColor: '#2563eb',
@@ -457,7 +458,10 @@ async function findByKey(publicKey) {
 // yet - finding the org is what the key is for.
 async function getPublicConfig(publicKey) {
   const row = await findByKey(publicKey);
-  if (!row) {
+  // An org without Chat has a widget row but no widget: its key is answered
+  // exactly like one that does not exist.
+  const products = row ? await productService.listForOrg(row.org_id) : [];
+  if (!row || !products.includes('chat')) {
     throw new ApiError(404, 'Unknown widget key');
   }
 
@@ -466,7 +470,9 @@ async function getPublicConfig(publicKey) {
   const { theme, tools, allowedDomains, bot } = present(row);
   const publicBot = { ...bot };
   delete publicBot.enquiryAlertEmail;
-  return { orgId: row.org_id, theme, tools, allowedDomains, bot: publicBot };
+  // products tells the chatbot whether the org has Desk, i.e. whether there
+  // are tickets to raise or look up.
+  return { orgId: row.org_id, products, theme, tools, allowedDomains, bot: publicBot };
 }
 
 // The bot settings as the main app itself sees them, alert address included.

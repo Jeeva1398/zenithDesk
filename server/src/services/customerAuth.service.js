@@ -23,6 +23,8 @@ async function resolveOrgForEmail(email) {
     `/* unscoped: resolves which org an address belongs to, so it precedes scoping */
      SELECT o.id AS org_id, o.name AS org_name FROM users u
      JOIN organizations o ON o.id = u.org_id
+     -- The customer portal is Desk's: an org without it has no portal to sign in to.
+     JOIN org_products p ON p.org_id = o.id AND p.product = 'desk' AND p.status <> 'cancelled'
      WHERE u.email = ?
      LIMIT 1`,
     [email],

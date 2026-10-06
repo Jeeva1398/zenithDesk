@@ -2,10 +2,11 @@ const express = require('express');
 const authenticate = require('../middlewares/authenticate');
 const requireAdmin = require('../middlewares/requireAdmin');
 const slaController = require('../controllers/sla.controller');
+const requireProduct = require('../middlewares/requireProduct');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, requireProduct('desk'));
 
 // Any agent may read the targets they are being measured against; only an admin
 // may change them.
