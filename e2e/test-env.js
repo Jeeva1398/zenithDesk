@@ -7,8 +7,18 @@ const TEST_DB_NAME = process.env.E2E_DB_NAME || 'zenithdesk_e2e';
 const API_PORT = Number(process.env.E2E_API_PORT || 7100);
 const CLIENT_PORT = Number(process.env.E2E_CLIENT_PORT || 5200);
 
-const API_URL = `http://localhost:${API_PORT}`;
-const CLIENT_URL = `http://localhost:${CLIENT_PORT}`;
+// E2E_TARGET=beta points the same tests at the deployed beta servers instead
+// (playwright.beta.config.js sets it). Nothing is started for those: the API,
+// portal and chat server are the ones running on beta.
+const TARGET = process.env.E2E_TARGET === 'beta' ? 'beta' : 'local';
+const BETA = {
+  api: 'https://beta-api.zenithdesk.site',
+  portal: 'https://beta-portal.zenithdesk.site',
+  chat: 'https://beta-chat.zenithdesk.site',
+};
+
+const API_URL = TARGET === 'beta' ? BETA.api : `http://localhost:${API_PORT}`;
+const CLIENT_URL = TARGET === 'beta' ? BETA.portal : `http://localhost:${CLIENT_PORT}`;
 
 const SERVER_DIR = path.resolve(__dirname, '..', 'server');
 const CLIENT_DIR = path.resolve(__dirname, '..', 'client');
@@ -52,6 +62,8 @@ function serverEnv(dbName = TEST_DB_NAME) {
 }
 
 module.exports = {
+  TARGET,
+  BETA,
   TEST_DB_NAME,
   API_PORT,
   CLIENT_PORT,
