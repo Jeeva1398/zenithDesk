@@ -1,5 +1,8 @@
+const crypto = require('crypto');
 const { forOrg } = require('../db/orgScope');
+const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
+const embeddings = require('./embeddings');
 const kbSearch = require('./kbSearch');
 
 const MAX_TITLE = 200;
@@ -19,6 +22,12 @@ const MAX_RESULTS = 5;
 // outright: updated_at is to the second, so an edit landing in the same second
 // as the last one would not move the version.
 const indexCache = new Map();
+
+// Passages are embedded in the background, a batch at a time, never while a
+// customer waits: until a passage has its vector it is found by keywords
+// only. One job per org at a time.
+const EMBED_BATCH = 16;
+const embedJobs = new Map();
 
 function validate({ title, body, isPublished }, { partial }) {
   const fields = {};
@@ -88,8 +97,62 @@ async function indexFor(orgId) {
 
   const articles = await db.list('kb_articles', { is_published: 1 }, { columns: 'id, title, body' });
   const index = kbSearch.buildIndex(articles);
+  await attachVectors(db, index);
   indexCache.set(orgId, { key, index });
+  syncVectors(orgId, index);
   return index;
+}
+
+function hashOf(text) {
+  return crypto.createHash('sha256').update(text).digest('hex');
+}
+
+async function attachVectors(db, index) {
+  if (!embeddings.enabled()) return;
+  for (const passage of index.passages) passage.hash = hashOf(kbSearch.embeddingText(passage));
+  const rows = await db.sql(
+    'SELECT content_hash, vector FROM kb_passage_embeddings WHERE org_id = :orgId AND model = ?',
+    [embeddings.MODEL],
+  );
+  const stored = new Map(rows.map((row) => [row.content_hash, row.vector]));
+  for (const passage of index.passages) {
+    const vector = stored.get(passage.hash);
+    if (vector) passage.vector = embeddings.fromBuffer(vector);
+  }
+}
+
+// Embeds the passages that have no vector yet, straight into the cached
+// index as well as the table, then drops stored vectors no current passage
+// uses - an edited paragraph's old text, or a deleted article's.
+function syncVectors(orgId, index) {
+  if (!embeddings.available() || embedJobs.has(orgId)) return;
+  const job = (async () => {
+    const db = forOrg(orgId);
+    const missing = index.passages.filter((p) => !p.vector);
+    for (let i = 0; i < missing.length; i += EMBED_BATCH) {
+      const batch = missing.slice(i, i + EMBED_BATCH);
+      const vectors = await embeddings.embedDocuments(batch.map(kbSearch.embeddingText));
+      for (const [n, passage] of batch.entries()) {
+        await db.sql(
+          `INSERT INTO kb_passage_embeddings (org_id, model, content_hash, vector, created_at, updated_at)
+           VALUES (:orgId, ?, ?, ?, NOW(), NOW())
+           ON DUPLICATE KEY UPDATE vector = VALUES(vector), updated_at = NOW()`,
+          [embeddings.MODEL, passage.hash, embeddings.toBuffer(vectors[n])],
+        );
+        passage.vector = vectors[n];
+      }
+    }
+    const hashes = [...new Set(index.passages.map((p) => p.hash))];
+    await db.sql(
+      `DELETE FROM kb_passage_embeddings WHERE org_id = :orgId
+       AND (model <> ?${hashes.length ? ' OR content_hash NOT IN (?)' : ' OR 1 = 1'})`,
+      hashes.length ? [embeddings.MODEL, hashes] : [embeddings.MODEL],
+    );
+    if (missing.length) logger.info(`Embedded ${missing.length} knowledge passages for org ${orgId}`);
+  })()
+    .catch((err) => logger.warn(`Embedding knowledge passages for org ${orgId} stopped: ${err.message}`))
+    .finally(() => embedJobs.delete(orgId));
+  embedJobs.set(orgId, job);
 }
 
 async function search(orgId, { query, limit }) {
@@ -102,7 +165,33 @@ async function search(orgId, { query, limit }) {
   }
 
   const index = await indexFor(orgId);
-  return { results: kbSearch.search(index, query.slice(0, MAX_QUERY), { limit: n }) };
+  const text = query.slice(0, MAX_QUERY);
+  // A job that stopped part way (Ollama was down) is picked up again here.
+  if (index.passages.some((p) => !p.vector)) syncVectors(orgId, index);
+  const queryVector = index.passages.some((p) => p.vector) ? await embeddings.embedQuery(text) : null;
+  return { results: kbSearch.search(index, text, { limit: n, queryVector }) };
 }
 
-module.exports = { listArticles, createArticle, updateArticle, deleteArticle, search };
+// The chatbot sends a question to its model when the best passage shares a
+// quarter of the question's words, or is this close in meaning.
+const MIN_COVERAGE = 0.25;
+
+// For a question the bot missed: the published article written or edited
+// since it was last asked that the search now leads to, if there is one - so
+// the dashboard can show which gaps have been dealt with.
+async function newerArticleFor(orgId, question, since) {
+  const { results } = await search(orgId, { query: question, limit: 3 });
+  const candidates = results.filter((r) => r.coverage >= MIN_COVERAGE || r.similarity >= kbSearch.MIN_SIMILARITY);
+  if (candidates.length === 0) return null;
+  const rows = await forOrg(orgId).sql(
+    'SELECT id, title, updated_at FROM kb_articles WHERE org_id = :orgId AND id IN (?)',
+    [candidates.map((r) => r.articleId)],
+  );
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const match = candidates
+    .map((r) => byId.get(r.articleId))
+    .find((a) => a && new Date(a.updated_at) >= new Date(since));
+  return match ? { id: match.id, title: match.title } : null;
+}
+
+module.exports = { listArticles, createArticle, updateArticle, deleteArticle, search, newerArticleFor };

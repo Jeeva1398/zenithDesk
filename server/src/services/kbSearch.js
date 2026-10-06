@@ -1,7 +1,7 @@
-// Keyword search over an org's knowledge base: articles cut into passages and
-// ranked with BM25. Pure functions - no database - so the ranking can be
-// tested on its own and swapped for embeddings later without touching the
-// service around it.
+// Search over an org's knowledge base: articles cut into passages, ranked
+// with BM25 and, when the passages carry embedding vectors, by meaning too.
+// Pure functions - no database, no model calls - so the ranking can be tested
+// on its own.
 //
 // Not MySQL FULLTEXT: InnoDB weighs a term by how rare it is across the whole
 // index, i.e. across every org's rows, so one tenant's results would shift
@@ -101,12 +101,19 @@ function buildIndex(articles) {
   return { passages, documentFrequency, averageLength };
 }
 
-function search(index, query, { limit = 4 } = {}) {
-  const queryTerms = [...new Set(tokenize(query))];
-  const total = index.passages.length;
-  if (queryTerms.length === 0 || total === 0) return [];
+// A passage counts as a match by meaning only above this cosine similarity,
+// and only when it is near the best one - nomic-embed-text puts unrelated
+// text around 0.35-0.5 and a real match at 0.6 and up, but which side of the
+// line the middle falls on varies with the question.
+const MIN_SIMILARITY = 0.55;
+const SIMILARITY_MARGIN = 0.06;
+// Reciprocal rank fusion: each ranking adds 1 / (RRF_K + rank). Ranks rather
+// than raw scores, since a BM25 score and a cosine are not on any common scale.
+const RRF_K = 60;
 
-  const scored = index.passages.map((passage) => {
+function keywordScores(index, queryTerms) {
+  const total = index.passages.length;
+  return index.passages.map((passage) => {
     const counts = new Map();
     for (const term of passage.terms) counts.set(term, (counts.get(term) || 0) + 1);
 
@@ -122,20 +129,68 @@ function search(index, query, { limit = 4 } = {}) {
       const idf = Math.log(1 + (total - df + 0.5) / (df + 0.5));
       score += (idf * tf * (K1 + 1)) / (tf + K1 * (1 - B + (B * passage.terms.length) / index.averageLength));
     }
-    return { passage, score, coverage: matched / queryTerms.length };
+    return { score, coverage: queryTerms.length ? matched / queryTerms.length : 0 };
+  });
+}
+
+function dot(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i += 1) sum += a[i] * b[i];
+  return sum;
+}
+
+// Vectors are stored at unit length, so the dot product is the cosine.
+function similarities(index, queryVector) {
+  return index.passages.map((p) =>
+    queryVector && p.vector && p.vector.length === queryVector.length ? dot(p.vector, queryVector) : null,
+  );
+}
+
+const round = (n, places) => Math.round(n * 10 ** places) / 10 ** places;
+
+function search(index, query, { limit = 4, queryVector = null, minSimilarity = MIN_SIMILARITY } = {}) {
+  const queryTerms = [...new Set(tokenize(query))];
+  if (index.passages.length === 0 || (queryTerms.length === 0 && !queryVector)) return [];
+
+  const keyword = keywordScores(index, queryTerms);
+  const similarity = similarities(index, queryVector);
+  const best = Math.max(-1, ...similarity.filter((s) => s !== null));
+
+  const rows = index.passages.map((passage, i) => ({
+    passage,
+    score: keyword[i].score,
+    coverage: keyword[i].coverage,
+    similarity: similarity[i],
+    byMeaning: similarity[i] !== null && similarity[i] >= minSimilarity && similarity[i] >= best - SIMILARITY_MARGIN,
+    fused: 0,
+  }));
+
+  const byKeyword = rows.filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+  const bySemantics = rows.filter((r) => r.byMeaning).sort((a, b) => b.similarity - a.similarity);
+  byKeyword.forEach((r, rank) => {
+    r.fused += 1 / (RRF_K + rank + 1);
+  });
+  bySemantics.forEach((r, rank) => {
+    r.fused += 1 / (RRF_K + rank + 1);
   });
 
-  return scored
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score)
+  return rows
+    .filter((r) => r.fused > 0)
+    .sort((a, b) => b.fused - a.fused || b.score - a.score)
     .slice(0, limit)
-    .map(({ passage, score, coverage }) => ({
+    .map(({ passage, score, coverage, similarity: s }) => ({
       articleId: passage.articleId,
       title: passage.title,
       text: passage.text,
-      score: Math.round(score * 1000) / 1000,
-      coverage: Math.round(coverage * 100) / 100,
+      score: round(score, 3),
+      coverage: round(coverage, 2),
+      similarity: s === null ? null : round(s, 3),
     }));
 }
 
-module.exports = { tokenize, toPassages, buildIndex, search };
+// What gets embedded for a passage, and hashed to find its stored vector.
+function embeddingText(passage) {
+  return `${passage.title}\n\n${passage.text}`;
+}
+
+module.exports = { tokenize, toPassages, buildIndex, search, embeddingText, MIN_SIMILARITY };

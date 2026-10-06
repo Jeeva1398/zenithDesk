@@ -172,10 +172,23 @@ function ChatbotAnalytics({ days }) {
               <ul className="divide-y divide-gray-100">
                 {data.knowledgeGaps.map((gap) => (
                   <li key={gap.question} className="flex items-start justify-between gap-4 py-2.5">
-                    <span className="text-sm text-gray-800">{gap.question}</span>
-                    <span className="shrink-0 text-xs text-gray-500">
-                      {gapLabel(gap)}
-                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-800">{gap.question}</p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {gapLabel(gap)}
+                        {gap.coveredBy && (
+                          <span className="text-emerald-700"> · Covered since by “{gap.coveredBy.title}”</span>
+                        )}
+                      </p>
+                    </div>
+                    {!gap.coveredBy && (
+                      <Link
+                        to={`/settings?tab=knowledge&draft=${encodeURIComponent(gap.question)}`}
+                        className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                      >
+                        Write article
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
