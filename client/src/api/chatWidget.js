@@ -8,6 +8,10 @@ export function updateChatWidgetSettings(token, data) {
   return request('/chat-widget', { method: 'PATCH', body: data, token });
 }
 
+export function getChatSetup(token) {
+  return request('/chat-widget/setup', { token });
+}
+
 export function regenerateChatWidgetKey(token) {
   return request('/chat-widget/regenerate-key', { method: 'POST', token });
 }

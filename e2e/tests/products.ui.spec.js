@@ -20,7 +20,10 @@ test.describe('products in the portal', () => {
     const org = await createOrg(request, { products: ['chat'] });
     await logIn(page, org);
 
-    await expect(page).toHaveURL(/\/dashboard\?view=chatbot$/);
+    await expect(page).toHaveURL(/\/chat$/);
+    await expect(page.getByRole('heading', { name: 'Set up your bot' })).toBeVisible();
+
+    await page.goto('/dashboard');
     await expect(page.getByRole('tab', { name: 'Tickets' })).toHaveCount(0);
 
     const nav = page.locator('aside');
@@ -42,7 +45,7 @@ test.describe('products in the portal', () => {
   test("a chat-only org's bot settings offer no tickets, and point to Desk", async ({ page, request }) => {
     const org = await createOrg(request, { products: ['chat'] });
     await logIn(page, org);
-    await expect(page).toHaveURL(/\/dashboard\?view=chatbot$/);
+    await expect(page).toHaveURL(/\/chat$/);
 
     await page.goto('/settings?tab=chatbot');
     await expect(page.getByRole('checkbox', { name: 'Take enquiries' })).toBeChecked();
@@ -57,10 +60,30 @@ test.describe('products in the portal', () => {
     await expect(page.getByText(/^Saved\./)).toBeVisible();
   });
 
+  test('signing up for Chat alone opens on its setup checklist', async ({ page }) => {
+    await page.goto('/register?product=chat');
+    await expect(page.getByRole('heading', { name: 'Start with ZenithDesk Chat' })).toBeVisible();
+
+    const email = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+    await page.getByLabel('Organization name').fill('Chat Signup Co');
+    await page.getByLabel('Your name').fill('Priya Shah');
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('e2e-password-123');
+    await page.getByLabel('Confirm password').fill('e2e-password-123');
+    await page.getByRole('button', { name: 'Create organization' }).click();
+
+    await expect(page).toHaveURL(/\/chat$/);
+    await expect(page.getByRole('heading', { name: 'Welcome, Priya' })).toBeVisible();
+    await expect(page.getByText('0 of 5 done')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy snippet' })).toBeVisible();
+    await expect(page.locator('pre code')).toContainText('widget.js');
+    await expect(page.locator('aside').getByRole('link', { name: 'Tickets' })).toHaveCount(0);
+  });
+
   test('an admin turns Desk on from the switcher and lands in the ticket queue', async ({ page, request }) => {
     const org = await createOrg(request, { products: ['chat'] });
     await logIn(page, org);
-    await expect(page).toHaveURL(/\/dashboard\?view=chatbot$/);
+    await expect(page).toHaveURL(/\/chat$/);
 
     await page.getByRole('navigation', { name: 'Products' }).getByRole('link', { name: 'Desk' }).click();
     await expect(page).toHaveURL(/\/products\/desk$/);

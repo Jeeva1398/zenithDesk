@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { signup as signupRequest } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { inputClass, labelClass, primaryButtonClass } from '../lib/ui';
+import { PRODUCTS } from '../lib/products';
 import Logo from '../components/Logo';
 import PasswordInput from '../components/PasswordInput';
 import ThemeToggle from '../components/ThemeToggle';
@@ -10,6 +11,10 @@ import ThemeToggle from '../components/ThemeToggle';
 function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  // ?product=chat (or desk) is a signup for that product alone - where each
+  // product's landing page sends people. Without it, the org gets both.
+  const [params] = useSearchParams();
+  const product = PRODUCTS[params.get('product')] || null;
   const [orgName, setOrgName] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,6 +39,7 @@ function RegisterPage() {
         adminName: name,
         adminEmail: email,
         adminPassword: password,
+        ...(product ? { products: [product.key] } : {}),
       });
       login(data);
       navigate('/');
@@ -53,8 +59,12 @@ function RegisterPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-1 text-xl font-semibold text-gray-900">Create your workspace</h1>
-          <p className="mb-6 text-sm text-gray-500">Set up your organization and admin account</p>
+          <h1 className="mb-1 text-xl font-semibold text-gray-900">
+            {product ? `Start with ${product.name}` : 'Create your workspace'}
+          </h1>
+          <p className="mb-6 text-sm text-gray-500">
+            {product ? product.tagline : 'Set up your organization and admin account'}
+          </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
