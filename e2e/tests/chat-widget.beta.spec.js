@@ -208,3 +208,71 @@ test.describe('chat-only widget on beta', () => {
     expect(enquiries[0].message).toMatch(/invoice export/);
   });
 });
+
+// With live chat on, a question the bot cannot answer offers a person or a
+// message. No agent is signed in on beta, so the visitor leaves a message.
+test.describe('chat-only widget with live chat on beta', () => {
+  let chatOrg;
+  let chatKey;
+
+  test.beforeAll(async ({ request }) => {
+    chatOrg = await createOrg(request, { products: ['chat'] });
+    const bot = await request.patch(`${API_URL}/chat-widget`, {
+      headers: auth(chatOrg.token),
+      data: { allowedDomains: [SITE], bot: { purposes: { enquiry: false }, handoff: { enabled: true } } },
+    });
+    expect(bot.status()).toBe(200);
+    chatKey = (await bot.json()).publicKey;
+  });
+
+  test('offers a person or a message, and takes the message', async ({ page, request }) => {
+    await openWidget(page, chatKey);
+    const email = `${unique('visitor')}@example.com`;
+
+    const offer = await say(page, 'Do you integrate with the warehouse system we use for shipping?', { first: true });
+    expect(offer).toMatch(/connect you with someone from the team, or take a message/i);
+    const chips = page.locator('.zd-quick-replies:not(.zd-quick-replies--questions) .zd-quick-replies__chip');
+    await expect(chips.filter({ hasText: 'Talk to a person' })).toBeVisible();
+
+    const before = await assistantMessages(page).count();
+    await chips.filter({ hasText: 'Leave a message' }).click();
+    await expect.poll(() => assistantMessages(page).count(), { timeout: 90_000 }).toBeGreaterThan(before);
+    await expect(page.locator('.zd-typing')).toHaveCount(0, { timeout: 90_000 });
+    expect((await assistantMessages(page).last().innerText()).trim()).toMatch(/Who should the team get back to/);
+
+    await say(page, `Beta Visitor ${email}`);
+    await expect(assistantMessages(page).last()).toContainText(/passed your message/i);
+
+    const messages = await (await request.get(`${API_URL}/enquiries?kind=message`, { headers: auth(chatOrg.token) })).json();
+    expect(messages.enquiries[0]).toMatchObject({ email, kind: 'message' });
+    expect(messages.enquiries[0].message).toMatch(/warehouse system/);
+  });
+});
+
+// Phase 4: the Chat setup checklist turns "Installed" green once a page on an
+// allowed site has loaded the real widget.
+test.describe('chat setup checklist on beta', () => {
+  test('marks the widget installed after a page loads it', async ({ page, request }) => {
+    const chatOrg = await createOrg(request, { products: ['chat'] });
+    const headers = auth(chatOrg.token);
+    const saved = await request.patch(`${API_URL}/chat-widget`, { headers, data: { allowedDomains: [SITE] } });
+    const chatKey = (await saved.json()).publicKey;
+
+    const setupOf = async () => (await request.get(`${API_URL}/chat-widget/setup`, { headers })).json();
+    const before = await setupOf();
+    expect(before.steps).toMatchObject({ allowedSites: true, installed: false });
+
+    await openWidget(page, chatKey);
+    await expect.poll(async () => (await setupOf()).steps.installed, { timeout: 30_000 }).toBe(true);
+    expect((await setupOf()).install.lastSeenOrigin).toBe(SITE);
+
+    // And the portal shows it.
+    await page.goto(`${BETA.portal}/login`);
+    await page.getByRole('textbox', { name: 'Email' }).fill(chatOrg.adminEmail);
+    await page.getByRole('textbox', { name: 'Password' }).fill(chatOrg.password);
+    await page.getByRole('button', { name: 'Log in' }).click();
+    await expect(page).toHaveURL(/\/chat$/);
+    await expect(page.getByText('Installed ✓')).toBeVisible();
+    await expect(page.getByText(`Last seen on ${SITE}`)).toBeVisible();
+  });
+});
