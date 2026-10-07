@@ -21,8 +21,9 @@ async function sendOtpEmail(to, code) {
 // every field here was typed by a stranger on a public website, and plain text
 // cannot carry markup or a disguised link into the recipient's inbox.
 async function sendEnquiryAlert(to, { orgName, enquiry }) {
+  const what = enquiry.kind === 'message' ? 'message' : 'enquiry';
   const lines = [
-    `New enquiry from your ${enquiry.source === 'form' ? 'website contact form' : 'chat widget'} for ${orgName}.`,
+    `New ${what} from your ${enquiry.source === 'form' ? 'website contact form' : 'chat widget'} for ${orgName}.`,
     '',
     `Name:    ${enquiry.name}`,
     enquiry.email ? `Email:   ${enquiry.email}` : null,
@@ -46,7 +47,7 @@ async function sendEnquiryAlert(to, { orgName, enquiry }) {
     from: process.env.RESEND_FROM_EMAIL,
     to,
     ...(enquiry.email ? { replyTo: enquiry.email } : {}),
-    subject: `New enquiry: ${enquiry.name}${enquiry.company ? ` (${enquiry.company})` : ''}`,
+    subject: `New ${what}: ${enquiry.name}${enquiry.company ? ` (${enquiry.company})` : ''}`,
     text,
   });
 }

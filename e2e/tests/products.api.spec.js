@@ -111,6 +111,48 @@ test.describe('products', () => {
     expect(enquiry.status()).toBe(201);
   });
 
+  test("a chat-only org's bot starts without tickets and cannot be given them", async ({ request }) => {
+    const org = await createOrg(request, { products: ['chat'] });
+    const headers = auth(org.token);
+
+    const widget = await (await request.get(`${API_URL}/chat-widget`, { headers })).json();
+    expect(widget.bot.purposes).toEqual({ enquiry: true, support: false, knowledge: true, status: false });
+    const pub = await (await request.get(`${API_URL}/chat-widget/public/${widget.publicKey}`)).json();
+    expect(pub.bot.purposes).toEqual({ enquiry: true, support: false, knowledge: true, status: false });
+
+    for (const purpose of ['support', 'status']) {
+      const res = await request.patch(`${API_URL}/chat-widget`, {
+        headers,
+        data: { bot: { purposes: { [purpose]: true } } },
+      });
+      expect(res.status(), purpose).toBe(400);
+      expect((await res.json()).error).toMatch(/ZenithDesk Desk/);
+    }
+
+    // Answers only is a whole bot: what it cannot answer becomes a message.
+    const answersOnly = await request.patch(`${API_URL}/chat-widget`, {
+      headers,
+      data: { bot: { purposes: { enquiry: false } } },
+    });
+    expect(answersOnly.status()).toBe(200);
+  });
+
+  test('turning Desk on leaves the bot as it was, for the admin to change', async ({ request }) => {
+    const org = await createOrg(request, { products: ['chat'] });
+    const headers = auth(org.token);
+
+    await request.post(`${API_URL}/organizations/me/products`, { headers, data: { product: 'desk' } });
+    const widget = await (await request.get(`${API_URL}/chat-widget`, { headers })).json();
+    expect(widget.bot.purposes).toEqual({ enquiry: true, support: false, knowledge: true, status: false });
+
+    const support = await request.patch(`${API_URL}/chat-widget`, {
+      headers,
+      data: { bot: { purposes: { support: true, status: true } } },
+    });
+    expect(support.status()).toBe(200);
+    expect((await support.json()).bot.purposes.support).toBe(true);
+  });
+
   test('a desk-only org reaches Desk, not Chat', async ({ request }) => {
     const org = await createOrg(request, { products: ['desk'] });
     const headers = auth(org.token);

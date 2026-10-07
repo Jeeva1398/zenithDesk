@@ -39,6 +39,24 @@ test.describe('products in the portal', () => {
     await expect(page.getByRole('heading', { name: 'ZenithDesk Desk' })).toBeVisible();
   });
 
+  test("a chat-only org's bot settings offer no tickets, and point to Desk", async ({ page, request }) => {
+    const org = await createOrg(request, { products: ['chat'] });
+    await logIn(page, org);
+    await expect(page).toHaveURL(/\/dashboard\?view=chatbot$/);
+
+    await page.goto('/settings?tab=chatbot');
+    await expect(page.getByRole('checkbox', { name: 'Take enquiries' })).toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Raise support tickets' })).toBeDisabled();
+    await expect(page.getByRole('checkbox', { name: 'Check ticket status' })).toBeDisabled();
+    await expect(page.getByText('Needs ZenithDesk Desk')).toHaveCount(2);
+    await expect(page.getByRole('button', { name: 'Support only' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Answers only' }).click();
+    await expect(page.getByText(/left as messages on the Enquiries page/)).toBeVisible();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText(/^Saved\./)).toBeVisible();
+  });
+
   test('an admin turns Desk on from the switcher and lands in the ticket queue', async ({ page, request }) => {
     const org = await createOrg(request, { products: ['chat'] });
     await logIn(page, org);
