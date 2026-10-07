@@ -16,7 +16,11 @@ const MAX_PAGE_SIZE = 100;
 // Where an enquiry came in: a conversation with the chat widget, or a
 // website's own contact form posting through the chat server.
 const SOURCES = ['chat', 'form'];
-const COLUMNS = 'id, name, email, phone, company, message, status, notes, source, created_at, updated_at';
+// A lead is someone the org takes enquiries from; a message is a question its
+// bot could not answer, passed on rather than lost. Messages are taken whether
+// or not the org takes enquiries - they are what the bot falls back on.
+const KINDS = ['lead', 'message'];
+const COLUMNS = 'id, name, email, phone, company, message, status, notes, source, kind, created_at, updated_at';
 
 function optionalText(value, field) {
   if (value === undefined || value === null) return null;
@@ -64,14 +68,18 @@ async function alertOrg(orgId, enquiry) {
 async function createEnquiry(orgId, input) {
   const source = input.source === undefined ? 'chat' : input.source;
   if (!SOURCES.includes(source)) throw new ApiError(400, `source must be one of: ${SOURCES.join(', ')}`);
+  const kind = input.kind === undefined ? 'lead' : input.kind;
+  if (!KINDS.includes(kind)) throw new ApiError(400, `kind must be one of: ${KINDS.join(', ')}`);
+  // A contact form is someone reaching out, not a question the bot was asked.
+  if (kind === 'message' && source !== 'chat') throw new ApiError(400, 'Only the chat leaves messages');
 
   const { purposes } = await chatWidgetService.getBotSettings(orgId);
-  if (!purposes.enquiry) {
+  if (kind === 'lead' && !purposes.enquiry) {
     throw new ApiError(409, 'This organization does not take enquiries');
   }
 
   const db = forOrg(orgId);
-  const id = await db.insert('enquiries', { ...validateNew(input), source });
+  const id = await db.insert('enquiries', { ...validateNew(input), source, kind });
   const enquiry = await db.get('enquiries', id, 'Enquiry not found', { columns: COLUMNS });
 
   // The enquiry is saved either way; a mail outage must not make the chatbot
@@ -82,7 +90,7 @@ async function createEnquiry(orgId, input) {
   return enquiry;
 }
 
-async function listEnquiries(orgId, { status, q, page, pageSize } = {}) {
+async function listEnquiries(orgId, { status, kind, q, page, pageSize } = {}) {
   const db = forOrg(orgId);
   const size = pageSize === undefined ? 25 : Number(pageSize);
   const pageNumber = page === undefined ? 1 : Number(page);
@@ -95,12 +103,19 @@ async function listEnquiries(orgId, { status, q, page, pageSize } = {}) {
   if (status !== undefined && status !== '' && !STATUSES.includes(status)) {
     throw new ApiError(400, `status must be one of: ${STATUSES.join(', ')}`);
   }
+  if (kind !== undefined && kind !== '' && !KINDS.includes(kind)) {
+    throw new ApiError(400, `kind must be one of: ${KINDS.join(', ')}`);
+  }
 
   const clauses = ['org_id = :orgId'];
   const params = [];
   if (status) {
     clauses.push('status = ?');
     params.push(status);
+  }
+  if (kind) {
+    clauses.push('kind = ?');
+    params.push(kind);
   }
   if (typeof q === 'string' && q.trim()) {
     const like = `%${q.trim().replace(/[\\%_]/g, '\\$&')}%`;
@@ -145,4 +160,4 @@ async function updateEnquiry(orgId, id, { status, notes }) {
   return db.get('enquiries', id, 'Enquiry not found', { columns: COLUMNS });
 }
 
-module.exports = { STATUSES, createEnquiry, listEnquiries, getEnquiry, updateEnquiry };
+module.exports = { STATUSES, KINDS, createEnquiry, listEnquiries, getEnquiry, updateEnquiry };

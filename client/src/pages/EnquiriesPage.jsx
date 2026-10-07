@@ -26,6 +26,16 @@ function StatusBadge({ status }) {
   );
 }
 
+// A message is a question the bot could not answer, left for the team; the
+// rest are leads.
+function KindBadge() {
+  return (
+    <span className="ml-2 inline-flex rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20">
+      Message
+    </span>
+  );
+}
+
 function formatWhen(value) {
   return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
@@ -82,7 +92,10 @@ function EnquiryModal({ enquiry, onClose, onSaved }) {
           </>
         )}
         <dt className="text-gray-500">Received</dt>
-        <dd className="text-gray-900">{formatWhen(enquiry.created_at)} · via {enquiry.source === 'form' ? 'contact form' : 'chat'}</dd>
+        <dd className="text-gray-900">
+          {formatWhen(enquiry.created_at)} · via {enquiry.source === 'form' ? 'contact form' : 'chat'}
+          {enquiry.kind === 'message' && ' · a question the bot could not answer'}
+        </dd>
       </dl>
 
       <p className={labelClass}>Message</p>
@@ -325,6 +338,7 @@ function EnquiriesPage() {
                     >
                       {enquiry.name}
                     </button>
+                    {enquiry.kind === 'message' && <KindBadge />}
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">{enquiry.company || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-600">

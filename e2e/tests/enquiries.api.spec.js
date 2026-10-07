@@ -157,6 +157,32 @@ test.describe('enquiries', () => {
     expect(res.status()).toBe(409);
   });
 
+  test('a message is taken even with enquiries off, and listed apart from leads', async ({ request }) => {
+    const org = await createOrg(request, { products: ['chat'] });
+    const headers = auth(org.token);
+    const { publicKey } = await widgetOf(request, org);
+    expect((await setBot(request, org, { purposes: { enquiry: false } })).status()).toBe(200);
+    const post = (data) => request.post(`${API_URL}/enquiries`, { headers: auth(PLATFORM, publicKey), data });
+
+    expect((await post(enquiry())).status()).toBe(409);
+    const message = await post(enquiry({ kind: 'message', message: 'How do I export my invoices?' }));
+    expect(message.status()).toBe(201);
+    expect(await message.json()).toMatchObject({ kind: 'message', source: 'chat', status: 'new' });
+
+    expect((await post(enquiry({ kind: 'complaint' }))).status()).toBe(400);
+    expect((await post(enquiry({ kind: 'message', source: 'form' }))).status()).toBe(400);
+
+    expect((await setBot(request, org, { purposes: { enquiry: true } })).status()).toBe(200);
+    const lead = await post(enquiry());
+    expect((await lead.json()).kind).toBe('lead');
+
+    const messages = await (await request.get(`${API_URL}/enquiries?kind=message`, { headers })).json();
+    expect(messages.enquiries.map((e) => e.kind)).toEqual(['message']);
+    const leads = await (await request.get(`${API_URL}/enquiries?kind=lead`, { headers })).json();
+    expect(leads.enquiries.map((e) => e.kind)).toEqual(['lead']);
+    expect((await request.get(`${API_URL}/enquiries?kind=spam`, { headers })).status()).toBe(400);
+  });
+
   test('the service token cannot read enquiries back', async ({ request }) => {
     const { key } = await enquiryOrg(request);
     const res = await request.get(`${API_URL}/enquiries`, { headers: auth(PLATFORM, key) });

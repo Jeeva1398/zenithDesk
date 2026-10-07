@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getChatWidgetSettings, updateChatWidgetSettings } from '../api/chatWidget';
 import { useAuth } from '../context/AuthContext';
+import { PRODUCTS } from '../lib/products';
 import { cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui';
 
 const CHATBOT_URL = (import.meta.env.VITE_CHATBOT_URL || 'http://localhost:4000').replace(/\/$/, '');
@@ -55,6 +57,7 @@ const PURPOSES = [
     key: 'support',
     label: 'Raise support tickets',
     description: 'Collects the problem, category and priority, then opens a ticket.',
+    needsDesk: true,
   },
   {
     key: 'knowledge',
@@ -65,13 +68,16 @@ const PURPOSES = [
     key: 'status',
     label: 'Check ticket status',
     description: 'Lets a customer look up their tickets after confirming their email.',
+    needsDesk: true,
   },
 ];
 
+// Without Desk there are no tickets, so only the presets without them are offered.
 const PRESETS = [
   { key: 'enquiry', label: 'Enquiry only', purposes: { enquiry: true, support: false, knowledge: true, status: false } },
-  { key: 'support', label: 'Support only', purposes: { enquiry: false, support: true, knowledge: true, status: true } },
-  { key: 'both', label: 'Enquiry + support', purposes: { enquiry: true, support: true, knowledge: true, status: true } },
+  { key: 'support', label: 'Support only', purposes: { enquiry: false, support: true, knowledge: true, status: true }, needsDesk: true },
+  { key: 'both', label: 'Enquiry + support', purposes: { enquiry: true, support: true, knowledge: true, status: true }, needsDesk: true },
+  { key: 'answers', label: 'Answers only', purposes: { enquiry: false, support: false, knowledge: true, status: false }, chatOnly: true },
 ];
 
 function samePurposes(a, b) {
@@ -79,8 +85,10 @@ function samePurposes(a, b) {
 }
 
 function BotPurposeSection() {
-  const { token, agent } = useAuth();
+  const { token, agent, hasProduct } = useAuth();
   const isAdmin = agent?.role === 'admin';
+  const hasDesk = hasProduct('desk');
+  const presets = PRESETS.filter((p) => (hasDesk ? !p.chatOnly : !p.needsDesk));
 
   const [draft, setDraft] = useState(null);
   const [publicKey, setPublicKey] = useState('');
@@ -119,7 +127,7 @@ function BotPurposeSection() {
 
   const disabled = !isAdmin || saving;
   const { purposes } = draft;
-  const activePreset = PRESETS.find((p) => samePurposes(p.purposes, purposes));
+  const activePreset = presets.find((p) => samePurposes(p.purposes, purposes));
   const nothingOn = !PURPOSES.some(({ key }) => purposes[key]);
   const takesTickets = purposes.support;
 
@@ -169,7 +177,7 @@ function BotPurposeSection() {
         <p className="mt-0.5 mb-4 text-sm text-gray-500">Start from a preset, or pick exactly what you need.</p>
 
         <div className="mb-5 flex flex-wrap gap-2">
-          {PRESETS.map((preset) => {
+          {presets.map((preset) => {
             const selected = activePreset?.key === preset.key;
             return (
               <button
@@ -195,26 +203,48 @@ function BotPurposeSection() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {PURPOSES.map((purpose) => (
-            <label
-              key={purpose.key}
-              className={`flex cursor-pointer gap-3 rounded-lg border p-3.5 transition ${
-                purposes[purpose.key] ? 'border-indigo-500/60 bg-indigo-50/60' : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={purposes[purpose.key]}
-                onChange={(e) => setPurposes({ ...purposes, [purpose.key]: e.target.checked })}
-                className="mt-0.5 size-4 shrink-0 accent-indigo-600"
-              />
-              <span>
-                <span className="block text-sm font-medium text-gray-900">{purpose.label}</span>
-                <span className="mt-0.5 block text-xs text-gray-500">{purpose.description}</span>
-              </span>
-            </label>
-          ))}
+          {PURPOSES.map((purpose) =>
+            purpose.needsDesk && !hasDesk ? (
+              <div key={purpose.key} className="flex gap-3 rounded-lg border border-dashed border-gray-200 p-3.5">
+                <input type="checkbox" checked={false} disabled aria-label={purpose.label} className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  <span className="block text-sm font-medium text-gray-400">{purpose.label}</span>
+                  <span className="mt-0.5 block text-xs text-gray-500">
+                    Needs {PRODUCTS.desk.name} &rarr;{' '}
+                    <Link to="/products/desk" className="font-medium text-indigo-600 hover:text-indigo-700">
+                      {isAdmin ? 'Enable' : 'Learn more'}
+                    </Link>
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <label
+                key={purpose.key}
+                className={`flex cursor-pointer gap-3 rounded-lg border p-3.5 transition ${
+                  purposes[purpose.key] ? 'border-indigo-500/60 bg-indigo-50/60' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={purposes[purpose.key]}
+                  onChange={(e) => setPurposes({ ...purposes, [purpose.key]: e.target.checked })}
+                  className="mt-0.5 size-4 shrink-0 accent-indigo-600"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">{purpose.label}</span>
+                  <span className="mt-0.5 block text-xs text-gray-500">{purpose.description}</span>
+                </span>
+              </label>
+            ),
+          )}
         </div>
+        {!hasDesk && (
+          <p className="mt-3 text-xs text-gray-500">
+            {purposes.enquiry
+              ? 'Questions the bot cannot answer are passed to your team as enquiries.'
+              : 'Questions the bot cannot answer are left as messages on the Enquiries page, so nothing a visitor asks is lost.'}
+          </p>
+        )}
         {nothingOn && <p className="mt-3 text-sm text-red-600">Turn on at least one thing for the bot to do.</p>}
       </fieldset>
 
@@ -259,22 +289,24 @@ function BotPurposeSection() {
               className={inputClass}
             />
             <p className="mt-1 text-xs text-gray-400">
-              After this, the bot takes the conversation back and offers {takesTickets ? 'a ticket' : 'what else it can do'}.
+              After this, the bot takes the conversation back and offers{' '}
+              {takesTickets ? 'a ticket' : hasDesk ? 'what else it can do' : 'to take a message'}.
             </p>
           </div>
         )}
       </fieldset>
 
-      {purposes.enquiry && (
+      {(purposes.enquiry || !hasDesk) && (
         <fieldset className={`${cardClass} p-5`} disabled={disabled}>
           <legend className="sr-only">Enquiry alerts</legend>
           <h3 className="text-base font-semibold text-gray-900">Enquiry alerts</h3>
           <p className="mt-0.5 mb-4 text-sm text-gray-500">
-            Each new enquiry is emailed to this address only. Leave it empty to just collect them on the Enquiries page.
+            Each new {hasDesk ? 'enquiry' : 'enquiry or message'} is emailed to this address only. Leave it empty to just
+            collect them on the Enquiries page.
           </p>
           <div className="max-w-md">
             <label htmlFor="bot-alert-email" className={labelClass}>
-              Send new enquiries to
+              {hasDesk ? 'Send new enquiries to' : 'Send new enquiries and messages to'}
             </label>
             <input
               id="bot-alert-email"

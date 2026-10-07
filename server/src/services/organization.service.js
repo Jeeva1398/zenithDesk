@@ -53,7 +53,7 @@ async function signup({ orgName, adminName, adminEmail, adminPassword, products:
 
     // Every org has exactly one widget row, whatever it starts with, so its
     // embed key exists from the moment Chat is turned on.
-    await chatWidgetService.seedDefaults(connection, orgId);
+    await chatWidgetService.seedDefaults(connection, orgId, products);
 
     await connection.commit();
 

@@ -61,6 +61,11 @@ const DEFAULT_BOT = {
   // waits for an agent to join before the bot takes the conversation back.
   handoff: { enabled: false, waitMinutes: 3 },
 };
+// Raising tickets and looking them up need Desk: an org with Chat alone has
+// no tickets. Its bot starts out taking enquiries and answering from the
+// knowledge base, and whatever it cannot answer is left as a message.
+const DESK_PURPOSES = ['support', 'status'];
+const CHAT_ONLY_PURPOSES = { enquiry: true, support: false, knowledge: true, status: false };
 const HANDOFF_WAIT_MINUTES = { min: 1, max: 30 };
 const BOT_TEXT_LIMITS = { companyDescription: 500, outOfScopeMessage: 300 };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -285,7 +290,7 @@ function sanitizeHandoff(input, current) {
 // Accepts a partial bot object and returns it checked, merged over what is
 // already stored, because the purposes have to be judged as a whole: the bot
 // must be left with at least one thing to do.
-function sanitizeBot(input, current) {
+function sanitizeBot(input, current, products) {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new ApiError(400, 'bot must be an object');
   }
@@ -302,6 +307,12 @@ function sanitizeBot(input, current) {
         }
         if (typeof on !== 'boolean') {
           throw new ApiError(400, `bot.purposes.${purpose} must be true or false`);
+        }
+        if (on && DESK_PURPOSES.includes(purpose) && !products.includes('desk')) {
+          throw new ApiError(
+            400,
+            `bot.purposes.${purpose} needs ${productService.PRODUCT_NAMES.desk}, which this organization does not have`,
+          );
         }
         bot.purposes[purpose] = on;
       }
@@ -333,12 +344,20 @@ function sanitizeBot(input, current) {
   return bot;
 }
 
-function presentBot(stored) {
+// Without Desk the ticket purposes read as off, whatever is stored: a bot
+// saved before the org lost Desk, or before this check existed, must not offer
+// tickets there are none of. Saving it then stores them off, so turning Desk on
+// later leaves them for the admin to switch on.
+function presentBot(stored, products) {
   const bot = parseJson(stored, {});
+  const purposes = { ...DEFAULT_BOT.purposes, ...(bot.purposes || {}) };
+  if (!products.includes('desk')) {
+    for (const purpose of DESK_PURPOSES) purposes[purpose] = false;
+  }
   return {
     ...DEFAULT_BOT,
     ...bot,
-    purposes: { ...DEFAULT_BOT.purposes, ...(bot.purposes || {}) },
+    purposes,
     handoff: { ...DEFAULT_BOT.handoff, ...(bot.handoff || {}) },
   };
 }
@@ -378,7 +397,7 @@ function sanitizeDomains(input) {
   return domains;
 }
 
-function present(row) {
+function present(row, products) {
   const tools = parseJson(row.tools, {});
   return {
     publicKey: row.public_key,
@@ -387,22 +406,26 @@ function present(row) {
     tools: {
       attachments: { ...DEFAULT_TOOLS.attachments, ...(tools.attachments || {}) },
     },
-    bot: presentBot(row.bot),
+    bot: presentBot(row.bot, products),
   };
 }
 
-async function seedDefaults(connection, orgId) {
+// products is what the org starts with. A Chat-only org's bot is stored with
+// its own purposes rather than left to the defaults, so it keeps them if Desk
+// is turned on later.
+async function seedDefaults(connection, orgId, products) {
+  const bot = products.includes('desk') ? {} : { purposes: CHAT_ONLY_PURPOSES };
   await connection.query(
     `INSERT INTO chat_widget_settings
-       (org_id, public_key, allowed_domains, theme, tools, created_at, updated_at)
-     VALUES (?, ?, '[]', '{}', '{}', NOW(), NOW())`,
-    [orgId, generatePublicKey()],
+       (org_id, public_key, allowed_domains, theme, tools, bot, created_at, updated_at)
+     VALUES (?, ?, '[]', '{}', '{}', ?, NOW(), NOW())`,
+    [orgId, generatePublicKey(), JSON.stringify(bot)],
   );
 }
 
 async function getSettings(orgId) {
   const row = await forOrg(orgId).get('chat_widget_settings', {}, 'Chat widget settings not found');
-  return present(row);
+  return present(row, await productService.listForOrg(orgId));
 }
 
 async function updateSettings(orgId, { theme, tools, allowedDomains, bot }) {
@@ -420,7 +443,8 @@ async function updateSettings(orgId, { theme, tools, allowedDomains, bot }) {
     updates.allowed_domains = JSON.stringify(sanitizeDomains(allowedDomains));
   }
   if (bot !== undefined) {
-    updates.bot = JSON.stringify(sanitizeBot(bot, presentBot(row.bot)));
+    const products = await productService.listForOrg(orgId);
+    updates.bot = JSON.stringify(sanitizeBot(bot, presentBot(row.bot, products), products));
   }
   if (Object.keys(updates).length === 0) {
     throw new ApiError(400, 'No valid fields to update');
@@ -467,7 +491,7 @@ async function getPublicConfig(publicKey) {
 
   // The alert address stays behind: this response is unauthenticated, and the
   // bot only needs to know what to do, not whom the main app will email.
-  const { theme, tools, allowedDomains, bot } = present(row);
+  const { theme, tools, allowedDomains, bot } = present(row, products);
   const publicBot = { ...bot };
   delete publicBot.enquiryAlertEmail;
   // products tells the chatbot whether the org has Desk, i.e. whether there
@@ -480,7 +504,7 @@ async function getBotSettings(orgId) {
   const row = await forOrg(orgId).get('chat_widget_settings', {}, 'Chat widget settings not found', {
     columns: 'bot',
   });
-  return presentBot(row.bot);
+  return presentBot(row.bot, await productService.listForOrg(orgId));
 }
 
 // Which org a widget key belongs to, or null. A platform service token acts
@@ -494,6 +518,7 @@ module.exports = {
   DEFAULT_THEME,
   DEFAULT_TOOLS,
   DEFAULT_BOT,
+  CHAT_ONLY_PURPOSES,
   ATTACHMENT_TYPES,
   MAX_ATTACHMENT_MB,
   seedDefaults,
