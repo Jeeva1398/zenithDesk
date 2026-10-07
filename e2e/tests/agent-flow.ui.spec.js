@@ -22,7 +22,7 @@ test.describe('agent dashboard', () => {
 
     await loginAsAgent(page, org);
 
-    await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
     await expect(page.getByText(ticket.subject)).toBeVisible();
   });
 
@@ -121,6 +121,6 @@ test.describe('agent dashboard', () => {
     await expect(page).toHaveURL(/\/login$/);
 
     await loginAsAgent(page, org);
-    await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
   });
 });

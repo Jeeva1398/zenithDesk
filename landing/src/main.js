@@ -8,6 +8,19 @@ document.querySelectorAll('[data-portal]').forEach((link) => {
   link.href = `${PORTAL_URL}${link.dataset.portal}`;
 });
 
+// The two product pages link to each other. In development both are served
+// from this one dev server; built, each lives on its own domain.
+const DESK_LANDING_URL =
+  import.meta.env.VITE_DESK_LANDING_URL || (import.meta.env.DEV ? '/' : 'https://zenithdesk.site');
+const CHAT_LANDING_URL =
+  import.meta.env.VITE_CHAT_LANDING_URL || (import.meta.env.DEV ? '/chat.html' : 'https://chat.zenithdesk.site');
+document.querySelectorAll('[data-desk-landing]').forEach((link) => {
+  link.href = DESK_LANDING_URL;
+});
+document.querySelectorAll('[data-chat-landing]').forEach((link) => {
+  link.href = CHAT_LANDING_URL;
+});
+
 document.querySelectorAll('[data-year]').forEach((el) => {
   el.textContent = String(new Date().getFullYear());
 });
@@ -103,6 +116,19 @@ if (chatbotUrl && widgetKey) {
   script.dataset.key = widgetKey;
   script.defer = true;
   document.body.appendChild(script);
+
+  // The Chat page's live demo is this widget, so its "try it" buttons open it.
+  // The widget draws itself into an open shadow root once it has loaded.
+  document.querySelectorAll('[data-demo-section], [data-demo-link]').forEach((el) => el.classList.remove('hidden'));
+  document.querySelectorAll('[data-open-demo]').forEach((button) => {
+    button.classList.replace('hidden', 'inline-flex');
+    button.addEventListener('click', () => {
+      const root = document.getElementById('zenithdesk-chatbot-widget-root')?.shadowRoot;
+      const launcher = root?.querySelector('button[aria-label^="Open chat"]');
+      if (launcher) launcher.click();
+      else document.getElementById('demo')?.scrollIntoView();
+    });
+  });
 }
 
 // The contact form posts through the same chat server and widget key, so its
