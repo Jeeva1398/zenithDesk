@@ -90,7 +90,7 @@ test.describe('products in the portal', () => {
     await page.getByRole('button', { name: 'Turn on Desk' }).click();
 
     await expect(page).toHaveURL(/\/tickets$/);
-    await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
     await expect(page.locator('aside').getByRole('link', { name: 'Customers' })).toBeVisible();
   });
 
