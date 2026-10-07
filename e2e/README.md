@@ -9,6 +9,7 @@ cd e2e && npm install && npx playwright install chromium   # first time only
 npm test            # everything
 npm run test:api    # API only (fast)
 npm run test:ui     # browser only
+npm run test:beta   # against the deployed beta servers (signs up ~8 test orgs a run)
 npm run report      # open the HTML report from the last CI-style run
 ```
 
