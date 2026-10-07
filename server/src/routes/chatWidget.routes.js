@@ -4,6 +4,7 @@ const requireAdmin = require('../middlewares/requireAdmin');
 const chatWidgetController = require('../controllers/chatWidget.controller');
 const { widgetConfigLimiter } = require('../middlewares/rateLimiters');
 const requireProduct = require('../middlewares/requireProduct');
+const authenticateAgentOrService = require('../middlewares/authenticateService');
 
 const router = express.Router();
 
@@ -16,6 +17,11 @@ router.get('/public/:key', widgetConfigLimiter, chatWidgetController.getPublicCo
 // Any agent may see how the widget is set up; only an admin may change it.
 router.get('/', authenticate, requireProduct('chat'), chatWidgetController.getSettings);
 router.patch('/', authenticate, requireProduct('chat'), requireAdmin, chatWidgetController.updateSettings);
+router.get('/setup', authenticate, requireProduct('chat'), chatWidgetController.getSetup);
 router.post('/regenerate-key', authenticate, requireProduct('chat'), requireAdmin, chatWidgetController.regenerateKey);
+
+// The chat server reporting a page that loaded the widget, for the setup
+// checklist's "Installed" step.
+router.post('/seen', authenticateAgentOrService, requireProduct('chat'), chatWidgetController.recordSeen);
 
 module.exports = router;

@@ -18,6 +18,7 @@ import SearchPage from './pages/SearchPage';
 import ProductPage from './pages/ProductPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ChatHomePage from './pages/ChatHomePage';
 import CustomerLoginPage from './pages/customer/CustomerLoginPage';
 import CustomerTicketsPage from './pages/customer/CustomerTicketsPage';
 import CustomerTicketDetailPage from './pages/customer/CustomerTicketDetailPage';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/tickets/:id" element={<TicketDetailPage />} />
           </Route>
           <Route element={<RequireProduct product="chat" />}>
+            <Route path="/chat" element={<ChatHomePage />} />
             <Route path="/enquiries" element={<EnquiriesPage />} />
             <Route path="/live-chats" element={<LiveChatsPage />} />
           </Route>

@@ -19,7 +19,7 @@ export const PRODUCTS = {
     key: 'chat',
     name: 'ZenithDesk Chat',
     short: 'Chat',
-    home: '/dashboard?view=chatbot',
+    home: '/chat',
     tagline: 'An AI assistant on your website that answers from your knowledge base',
     features: [
       'Answers questions from your knowledge base, with its sources',

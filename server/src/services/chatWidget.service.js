@@ -445,6 +445,7 @@ async function updateSettings(orgId, { theme, tools, allowedDomains, bot }) {
   if (bot !== undefined) {
     const products = await productService.listForOrg(orgId);
     updates.bot = JSON.stringify(sanitizeBot(bot, presentBot(row.bot, products), products));
+    updates.bot_saved_at = new Date();
   }
   if (Object.keys(updates).length === 0) {
     throw new ApiError(400, 'No valid fields to update');
@@ -507,6 +508,63 @@ async function getBotSettings(orgId) {
   return presentBot(row.bot, await productService.listForOrg(orgId));
 }
 
+// The chat server telling us the widget has loaded on a page - the proof, for
+// the setup checklist, that the snippet is installed. Only an allowed site
+// counts: the chat server has already turned any other away.
+async function recordSeen(orgId, origin) {
+  if (typeof origin !== 'string' || !origin.trim() || origin.length > 255) {
+    throw new ApiError(400, 'origin is required');
+  }
+  const db = forOrg(orgId);
+  const row = await db.get('chat_widget_settings', {}, 'Chat widget settings not found', {
+    columns: 'allowed_domains',
+  });
+  let normalized;
+  try {
+    normalized = normalizeDomain(origin);
+  } catch {
+    throw new ApiError(400, 'origin must be a site address');
+  }
+  if (!parseJson(row.allowed_domains, []).includes(normalized)) {
+    throw new ApiError(400, 'That site is not one of the allowed sites');
+  }
+  await db.sql(
+    `UPDATE chat_widget_settings
+     SET first_seen_at = COALESCE(first_seen_at, NOW()), last_seen_at = NOW(), last_seen_origin = ?
+     WHERE org_id = :orgId`,
+    [normalized],
+  );
+}
+
+// The Chat home page's setup checklist: each step done or not, worked out from
+// what the org has rather than ticked by hand, so it can never say done when
+// it is not.
+async function getSetup(orgId) {
+  const db = forOrg(orgId);
+  const row = await db.get('chat_widget_settings', {}, 'Chat widget settings not found');
+  const [{ articles }] = await db.sql(
+    'SELECT COUNT(*) AS articles FROM kb_articles WHERE org_id = :orgId AND is_published = 1',
+  );
+  const [{ agents }] = await db.sql('SELECT COUNT(*) AS agents FROM agents WHERE org_id = :orgId');
+
+  return {
+    publicKey: row.public_key,
+    steps: {
+      branded: Object.keys(parseJson(row.theme, {})).length > 0,
+      purposes: row.bot_saved_at !== null,
+      knowledge: Number(articles) > 0,
+      allowedSites: parseJson(row.allowed_domains, []).length > 0,
+      installed: row.first_seen_at !== null,
+      teammate: Number(agents) > 1,
+    },
+    install: {
+      firstSeenAt: row.first_seen_at,
+      lastSeenAt: row.last_seen_at,
+      lastSeenOrigin: row.last_seen_origin,
+    },
+  };
+}
+
 // Which org a widget key belongs to, or null. A platform service token acts
 // for whichever org the widget it names belongs to.
 async function findOrgIdByKey(publicKey) {
@@ -529,4 +587,6 @@ module.exports = {
   getBotSettings,
   findOrgIdByKey,
   normalizeDomain,
+  recordSeen,
+  getSetup,
 };
