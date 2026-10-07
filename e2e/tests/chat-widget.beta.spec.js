@@ -49,13 +49,13 @@ test.beforeAll(async ({ request }) => {
   expect(article.status()).toBe(201);
 });
 
-async function openWidget(page) {
+async function openWidget(page, key = widgetKey) {
   await page.route(`${SITE}/`, (route) =>
     route.fulfill({
       contentType: 'text/html',
       body: `<!doctype html><html><head><title>Widget test</title></head><body>
         <h1>Widget test</h1>
-        <script src="${BETA.chat}/widget.js" data-key="${widgetKey}" defer></script>
+        <script src="${BETA.chat}/widget.js" data-key="${key}" defer></script>
       </body></html>`,
     }),
   );
@@ -164,5 +164,47 @@ test.describe('chat widget on beta', () => {
     const enquiries = await request.get(`${API_URL}/enquiries`, { headers: auth(org.token) });
     expect(enquiries.status()).toBe(200);
     expect(JSON.stringify(await enquiries.json())).toContain(email);
+  });
+});
+
+// An org with Chat alone: its bot has no tickets to raise, so what it cannot
+// answer - a problem included - is left as a message for the team.
+test.describe('chat-only widget on beta', () => {
+  let chatOrg;
+  let chatKey;
+
+  test.beforeAll(async ({ request }) => {
+    chatOrg = await createOrg(request, { products: ['chat'] });
+    const bot = await request.patch(`${API_URL}/chat-widget`, {
+      headers: auth(chatOrg.token),
+      data: { allowedDomains: [SITE], bot: { purposes: { enquiry: false } } },
+    });
+    expect(bot.status()).toBe(200);
+    expect((await bot.json()).bot.purposes).toEqual({ enquiry: false, support: false, knowledge: true, status: false });
+    chatKey = (await bot.json()).publicKey;
+  });
+
+  test('leaves a problem it cannot answer as a message, never a ticket', async ({ page, request }) => {
+    await openWidget(page, chatKey);
+    const email = `${unique('visitor')}@example.com`;
+
+    const reply = await say(
+      page,
+      'My invoice export keeps failing with a timeout error every time I run it for last month.',
+      { first: true },
+    );
+    expect(reply).not.toMatch(/ticket/i);
+    await converse(page, reply, {
+      contact: `Beta Visitor ${email}`,
+      detail: 'It fails every time, for any month I pick.',
+      done: /passed your message/i,
+    });
+
+    const messages = await request.get(`${API_URL}/enquiries?kind=message`, { headers: auth(chatOrg.token) });
+    expect(messages.status()).toBe(200);
+    const { enquiries } = await messages.json();
+    expect(enquiries).toHaveLength(1);
+    expect(enquiries[0]).toMatchObject({ email, kind: 'message', source: 'chat' });
+    expect(enquiries[0].message).toMatch(/invoice export/);
   });
 });
